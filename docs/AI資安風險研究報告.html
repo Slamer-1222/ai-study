@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式AI資安風險報告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f4f4f5; /* Warm Neutral */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #2563eb; /* Accent Blue */
+            border-bottom-color: #2563eb;
+        }
+        .tab-button.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .cdm-toggle.active {
+            background-color: #1e3a8a; /* Darker Blue for active state */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: -8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #93c5fd; /* Light Blue */
+            border: 3px solid #3b82f6; /* Mid Blue */
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="font-bold text-lg text-slate-800">AI資安風險儀表板</div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#risk-overview" class="nav-link border-b-2 border-transparent pb-1">風險總覽</a>
+                <a href="#attack-vectors" class="nav-link border-b-2 border-transparent pb-1">攻擊向量</a>
+                <a href="#incidents" class="nav-link border-b-2 border-transparent pb-1">近期事件</a>
+                <a href="#defense-matrix" class="nav-link border-b-2 border-transparent pb-1">防禦矩陣</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="hero" class="text-center py-16">
+            <h1 class="text-4xl md:text-5xl font-black text-slate-900 mb-4">解構AI時代的資安新賽局</h1>
+            <p class="text-lg md:text-xl text-slate-600 max-w-4xl mx-auto">本儀表板將深入剖析AI技術在整合開發環境、終端工具及瀏覽器中所引入的新型資安風險，並提供可互動的防禦策略框架。</p>
+        </section>
+
+        <section id="risk-overview" class="mb-16">
+            <h2 class="text-3xl font-bold text-slate-800 text-center mb-8">關鍵風險指標</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                    <p class="text-5xl font-extrabold text-blue-600 mb-2">80%</p>
+                    <h3 class="text-lg font-semibold">企業AI工具未受管理</h3>
+                    <p class="text-slate-500 mt-1 text-sm">「影子AI」的廣泛存在，形成巨大安全盲點，資料外洩與合規風險遽增。[19]</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-amber-500">
+                    <p class="text-5xl font-extrabold text-amber-600 mb-2">+56.4%</p>
+                    <h3 class="text-lg font-semibold">年度AI相關資安事件</h3>
+                    <p class="text-slate-500 mt-1 text-sm">AI相關事件在一年內快速增長，涵蓋隱私侵犯到演算法濫用等多個層面。[13]</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
+                    <p class="text-5xl font-extrabold text-red-600 mb-2">+1300%</p>
+                    <h3 class="text-lg font-semibold">開源套件威脅 (2020-2023)</h3>
+                    <p class="text-slate-500 mt-1 text-sm">AI開發大量依賴開源元件，其供應鏈已成為攻擊者植入惡意程式碼的溫床。[16]</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="attack-vectors" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mb-16">
+             <h2 class="text-3xl font-bold text-slate-800 text-center mb-8">探索AI攻擊面：技術類型與風險</h2>
+             <p class="text-center text-slate-600 mb-8 max-w-3xl mx-auto">不同的AI應用部署模式帶來了獨特的風險。點擊下方頁籤，了解各類AI工具的運作方式及其潛在的安全漏洞。</p>
+            <div class="flex justify-center mb-6 border-b border-slate-200">
+                <button class="tab-button px-4 py-2 font-semibold text-slate-600 rounded-t-lg transition-colors duration-300 active" onclick="switchTab('ide')">IDE 工具</button>
+                <button class="tab-button px-4 py-2 font-semibold text-slate-600 rounded-t-lg transition-colors duration-300" onclick="switchTab('mcp')">MCP 整合</button>
+                <button class="tab-button px-4 py-2 font-semibold text-slate-600 rounded-t-lg transition-colors duration-300" onclick="switchTab('cli')">終端機工具</button>
+                <button class="tab-button px-4 py-2 font-semibold text-slate-600 rounded-t-lg transition-colors duration-300" onclick="switchTab('browser')">瀏覽器擴充</button>
+            </div>
+            <div id="tab-content" class="grid grid-cols-1 md:grid-cols-5 gap-8 items-center min-h-[350px]">
+                <div id="content-ide" class="tab-pane md:col-span-3">
+                    <h3 class="text-2xl font-bold text-blue-700 mb-3">擴大信任與隱含權限</h3>
+                    <p class="leading-relaxed">AI IDE工具（如Cursor）深度整合開發環境，可存取整個程式碼庫並執行編輯、終端命令等操作。開發者為求效率，可能在未經審慎評估下授予其過高權限。AI的「權威光環效應」降低了開發者的警覺性，使得工具或其底層模型的任何妥協，都可能直接轉化為對開發工作站的全面入侵。</p>
+                </div>
+                <div id="content-mcp" class="tab-pane hidden md:col-span-3">
+                    <h3 class="text-2xl font-bold text-blue-700 mb-3">代理式盲點與工具中毒</h3>
+                    <p class="leading-relaxed">MCP整合（如Gemini CLI）允許AI調用外部工具。AI依賴工具的「自然語言描述」來決定如何使用，而非其程式碼本身。攻擊者可透過「工具中毒」（在描述中嵌入惡意指令）或「拉地毯攻擊」（更新已受信任的工具使其變為惡意），誘騙AI執行有害操作。由於操作看似合法，此類攻擊在日誌中極難被偵測。</p>
+                </div>
+                 <div id="content-cli" class="tab-pane hidden md:col-span-3">
+                    <h3 class="text-2xl font-bold text-blue-700 mb-3">本地控制矛盾</h3>
+                    <p class="leading-relaxed">終端機AI工具（如Claude Code）在本地運行，看似提供了更多控制權。然而，這也極大地擴展了本地攻擊面。若工具本身遭供應鏈攻擊，或被提示注入誘騙，其影響將直接且立即地作用於本地系統。方便的「始終允許」選項，更可能為自動化惡意行為打開大門。</p>
+                </div>
+                 <div id="content-browser" class="tab-pane hidden md:col-span-3">
+                     <h3 class="text-2xl font-bold text-blue-700 mb-3">隱形內部人員</h3>
+                     <p class="leading-relaxed">AI瀏覽器擴充功能常要求讀取、修改網頁內容的廣泛權限，可能秘密收集憑證、Cookie等敏感資料，並透過不安全通道傳輸。由於發生在瀏覽器內部，這種行為能繞過傳統端點與網路防護，如同一個隱形內部人員，造成大規模資料外洩與合規災難。</p>
+                </div>
+                <div class="md:col-span-2">
+                    <div class="chart-container">
+                        <canvas id="riskVectorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="incidents" class="mb-16">
+            <h2 class="text-3xl font-bold text-slate-800 text-center mb-12">近期關鍵AI資安事件</h2>
+            <div class="relative max-w-2xl mx-auto">
+                <div class="absolute left-3 top-0 h-full w-0.5 bg-slate-300"></div>
+                <div class="timeline-item relative pl-10 pb-10">
+                    <div class="absolute -left-1.5 top-3 w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></div>
+                    <p class="text-sm font-semibold text-slate-500">2024年末</p>
+                    <h4 class="font-bold text-lg">瀏覽器擴充功能遭駭</h4>
+                    <p class="text-slate-600 text-sm">Cyberhaven Chrome擴充功能因員工憑證被釣魚而遭入侵，發布惡意版本，影響超過260萬使用者，大規模竊取Cookie與已驗證會話。[20]</p>
+                </div>
+                <div class="timeline-item relative pl-10 pb-10">
+                    <p class="text-sm font-semibold text-slate-500">2025年5月</p>
+                    <h4 class="font-bold text-lg">IDE助手漏洞</h4>
+                    <p class="text-slate-600 text-sm">GitLab的AI助理Duo被發現存在間接提示注入漏洞，可能允許攻擊者竊取原始碼並將惡意HTML注入其回應中。[38]</p>
+                </div>
+                <div class="timeline-item relative pl-10 pb-10">
+                    <p class="text-sm font-semibold text-slate-500">2025年5月</p>
+                    <h4 class="font-bold text-lg">隱形提示注入</h4>
+                    <p class="text-slate-600 text-sm">研究人員發現利用特殊Unicode字元隱藏惡意指令的新型攻擊，這些指令人眼不可見，但LLM能完全解讀，實現隱蔽操縱。[18]</p>
+                </div>
+                <div class="timeline-item relative pl-10 pb-2">
+                    <p class="text-sm font-semibold text-slate-500">2025年6月</p>
+                    <h4 class="font-bold text-lg">MCP伺服器漏洞</h4>
+                    <p class="text-slate-600 text-sm">Asana的MCP伺服器因內部錯誤，可能導致使用者資料洩漏給其他帳戶，揭示了AI中介層的資料隔離風險。[40]</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="defense-matrix" class="bg-slate-800 text-white p-6 md:p-10 rounded-2xl shadow-2xl">
+            <h2 class="text-4xl font-black text-center mb-4">互動式資安防禦矩陣 (CDM)</h2>
+            <p class="text-center text-slate-300 mb-10 max-w-4xl mx-auto">點擊下方按鈕切換「短期」與「中期」策略，探索如何運用網路防禦矩陣（Cyber Defense Matrix）框架，系統性地構建全面、分層的AI安全防禦體系。</p>
+            
+            <div class="flex justify-center items-center mb-10 rounded-full bg-slate-700/50 p-1 w-fit mx-auto">
+                <button id="btn-short-term" class="cdm-toggle px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 active" onclick="switchCDM('short')">短期策略 (立即行動)</button>
+                <button id="btn-mid-term" class="cdm-toggle px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300" onclick="switchCDM('mid')">中期策略 (逐步強化)</button>
+            </div>
+            
+            <div id="cdm-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-center">
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="text-center py-8 text-slate-500 text-sm">
+        <p>基於《近期AI技術在網路及系統應用上的資安風險評估報告》生成</p>
+        <p>&copy; 2025 互動式報告</p>
+    </footer>
+
+    <script>
+        const cdmData = {
+            short: [
+                { asset: '🖥️ 主機端點', identify: '盤點所有AI工具', protect: '實施最小權限原則', detect: '監控AI工具異常行為', respond: '隔離受感染端點', recover: '從安全備份中重建' },
+                { asset: '🌐 網路連線', identify: '識別AI通訊路徑', protect: '強制TLS加密', detect: '監控異常網路流量', respond: '阻斷惡意流量', recover: '恢復網路服務' },
+                { asset: '🗃️ 資料', identify: '分類AI處理的敏感資料', protect: '實施資料加密', detect: '部署AI-DLP', respond: '阻止資料外洩', recover: '執行資料完整性檢查' },
+                { asset: '🧩 應用程式', identify: '識別模型來源', protect: '強化身份驗證', detect: '監控API呼叫異常', respond: '禁用受損應用', recover: '部署已驗證版本' },
+                { asset: '👤 使用者', identify: '評估使用者信任習慣', protect: '進行安全意識培訓', detect: '監控使用者互動行為', respond: '停用受損帳戶', recover: '重新培訓使用者' },
+            ],
+            mid: [
+                { asset: '🖥️ 主機端點', identify: '整合AI漏洞情報源', protect: '實施模型程式碼簽章', detect: '部署AI驅動的SAST/DAST', respond: 'AI輔助修復漏洞', recover: '強化端點重建自動化' },
+                { asset: '🌐 網路連線', identify: '監控AI網路行為基準', protect: '實施CASB管理雲端存取', detect: '應用AI驅動NTA', respond: '自動化網路隔離', recover: '根據攻擊模式優化拓撲' },
+                { asset: '🗃️ 資料', identify: '實施資料來源追蹤', protect: '建立AI資料治理框架', detect: '部署新一代語義DLP', respond: 'AI自動化資料洩露遏制', recover: '制定合規性復原計畫' },
+                { asset: '🧩 應用程式', identify: '實施AI系統發現機制', protect: '實施安全AI開發生命週期', detect: '部署AI模型掃描器', respond: 'AI輔助漏洞修復', recover: '建立模型版本管理' },
+                { asset: '👤 使用者', identify: '建立AI使用政策', protect: '實施多因素身份驗證 (MFA)', detect: '監控高風險活動', respond: '實施自動化帳戶鎖定', recover: '強化AI社交工程培訓' },
+            ]
+        };
+
+        const cdmHeaders = ['資產類型', '識別 (Identify)', '保護 (Protect)', '偵測 (Detect)', '回應 (Respond)', '復原 (Recover)'];
+
+        function renderCDM(term) {
+            const container = document.getElementById('cdm-grid-container');
+            container.innerHTML = ''; 
+
+            const headersHtml = cdmHeaders.map(header => `<div class="p-3 bg-slate-900 rounded-t-lg font-bold text-sm text-blue-300 hidden lg:block">${header}</div>`).join('');
+            container.innerHTML += headersHtml;
+
+            cdmData[term].forEach(row => {
+                const cells = [row.asset, row.identify, row.protect, row.detect, row.respond, row.recover];
+                for(let i = 0; i < cells.length; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'bg-slate-700/70 p-4 rounded-lg flex flex-col justify-center items-center min-h-[120px] transition hover:bg-slate-600/70';
+                    const headerForMobile = `<div class="font-bold text-sm text-blue-300 mb-2 lg:hidden">${cdmHeaders[i]}</div>`;
+                    cell.innerHTML = `${headerForMobile}<p class="text-sm text-slate-200">${cells[i]}</p>`;
+                    if(i === 0) {
+                         cell.classList.add('lg:bg-slate-900', 'font-bold', 'text-lg');
+                    }
+                    container.appendChild(cell);
+                }
+            });
+             container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 text-center';
+        }
+
+        function switchCDM(term) {
+            document.getElementById('btn-short-term').classList.toggle('active', term === 'short');
+            document.getElementById('btn-mid-term').classList.toggle('active', term === 'mid');
+            renderCDM(term);
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+            document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCDM('short');
+
+            const ctxRiskVector = document.getElementById('riskVectorChart').getContext('2d');
+            const riskVectorChart = new Chart(ctxRiskVector, {
+                type: 'radar',
+                data: {
+                    labels: ['提示注入', '供應鏈漏洞', '資料外洩', '工具中毒', '過度代理'],
+                    datasets: [{
+                        label: 'AI新型攻擊向量風險',
+                        data: [9, 8, 8, 7, 6],
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: { 
+                                font: { size: 13, family: "'Noto Sans TC', sans-serif" },
+                                color: '#334155'
+                            },
+                            ticks: {
+                                backdropColor: 'transparent',
+                                color: '#64748b',
+                                stepSize: 2
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#334155',
+                                font: { family: "'Noto Sans TC', sans-serif" }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

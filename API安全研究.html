@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 應用趨勢與資安威脅影響研究報告</title>
+    
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/preline@3.0.1/dist/preline.min.js"></script>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/material-icons@1.13.14/iconfont/material-icons.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e'
+                        },
+                        secondary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif'],
+                        'mono': ['SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', 'monospace']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-in-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'bounce-gentle': 'bounceGentle 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        bounceGentle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .scroll-smooth { scroll-behavior: smooth; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
+    <!-- Theme Toggle -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="theme-toggle" class="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300">
+            <i class="fas fa-moon dark:hidden text-gray-700"></i>
+            <i class="fas fa-sun hidden dark:inline text-yellow-400"></i>
+        </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-shield-alt text-2xl text-primary-600"></i>
+                    <span class="text-xl font-bold">API 安全研究報告</span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#overview" class="text-gray-600 dark:text-gray-300 hover:text-primary-600 transition-colors duration-200">總覽</a><a href="#trends" class="text-gray-600 dark:text-gray-300 hover:text-primary-600 transition-colors duration-200">應用趨勢</a>
+                    <a href="#threats" class="text-gray-600 dark:text-gray-300 hover:text-primary-600 transition-colors duration-200">資安威脅</a>
+                    <a href="#security" class="text-gray-600 dark:text-gray-300 hover:text-primary-600 transition-colors duration-200">防護策略</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
+        <div class="absolute inset-0 bg-black/20"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+            <div class="text-center animate-fade-in">
+                <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                    API 應用趨勢與<br>資安威脅影響研究
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 text-blue-100">
+                    全面解析現代企業數位轉型中的API安全挑戰與解決方案
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">10x</div>
+                        <div class="text-sm">API漏洞導致的資料外洩倍數</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">21%</div>
+                        <div class="text-sm">2024年Q3 API安全漏洞增長率</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold">540萬</div>
+                        <div class="text-sm">Twitter API漏洞影響用戶數</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16 animate-slide-up">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gray-900 dark:text-white">總覽</h2>
+                <div class="w-24 h-1 bg-primary-500 mx-auto mb-8"></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6 animate-fade-in">
+                    <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">隨著數位轉型浪潮席捲全球，應用程式介面（API）已成為現代企業創新的基石與數位經濟的核心驅動力。
+                        從金融科技的開放銀行、物聯網（IoT）裝置的數據交換，到微服務架構的內部通訊，API 無所不在，
+                        深刻地改變了企業與客戶、合作夥伴及員工的互動方式。
+                    </p>
+                    <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+                        然而，API 的爆炸性增長也使其成為駭客的首要攻擊目標，相關資安風險正以前所未有的速度加劇。
+                        傳統以邊界防護為核心的資安策略已不足以應對針對 API 的複雜攻擊。
+                    </p>
+                </div>
+                <div class="relative">
+                    <div id="apiGrowthChart" class="w-full h-80"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trends Section -->
+    <section id="trends" class="py-20 bg-gray-100 dark:bg-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">API 應用趨勢與市場發展</h2>
+                <div class="w-24 h-1 bg-primary-500 mx-auto mb-8"></div>
+            </div>
+
+            <!-- Technology Evolution -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-bold mb-8 text-center">技術演進與典範轉移</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift">
+                        <div class="text-blue-500 text-4xl mb-4">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">RESTful API</h4>
+                        <p class="text-gray-600 dark:text-gray-300">
+                            已成為 Web API 的實質性標準，取代複雜的 SOAP 協議，提供更輕量且易於使用的解決方案。
+                        </p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift">
+                        <div class="text-purple-500 text-4xl mb-4">
+                            <i class="fas fa-search-plus"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">GraphQL</h4>
+                        <p class="text-gray-600 dark:text-gray-300">
+                            由 Facebook 開發，允許客戶端精確請求所需數據，解決 RESTful API 的「多次調用」問題。
+                        </p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift">
+                        <div class="text-green-500 text-4xl mb-4">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">gRPC</h4>
+                        <p class="text-gray-600 dark:text-gray-300">
+                            由 Google 開發的高性能二進位協議，主要用於微服務架構中的內部服務通訊。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Types Table -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-bold mb-8 text-center">API 使用模式分類</h3>
+                <div class="bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-600">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">API 使用模式</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">描述</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                                <tr>
+                                    <td class="px-6 py-4 font-semibold text-blue-600 dark:text-blue-400">公共 API (Public API)</td>
+                                    <td class="px-6 py-4 text-gray-700 dark:text-gray-300">透過網際網路向所有開發者免費提供的 API</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 font-semibold text-purple-600 dark:text-purple-400">私有/內部 API</td>
+                                    <td class="px-6 py-4 text-gray-700 dark:text-gray-300">在受保護的環境中實施，供受信任的內部開發人員使用的 API</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 font-semibold text-green-600 dark:text-green-400">合作夥伴 API</td><td class="px-6 py-4 text-gray-700 dark:text-gray-300">選擇性地提供給已授權的業務合作夥伴使用的第三方 API</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 font-semibold text-orange-600 dark:text-orange-400">B2C API</td>
+                                    <td class="px-6 py-4 text-gray-700 dark:text-gray-300">為 Web 和行動應用程式提供支援，面向終端消費者的 API</td>
+                                </tr>
+                                <tr><td class="px-6 py-4 font-semibold text-red-600 dark:text-red-400">B2B API</td>
+                                    <td class="px-6 py-4 text-gray-700 dark:text-gray-300">供業務合作夥伴（其他公司）使用的 API，是企業數位轉型的基礎</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Industry Applications -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift text-center">
+                    <div class="text-green-500 text-5xl mb-4">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2">金融服務</h4>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">開放銀行 API 支援第三方金融科技創新服務</p>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift text-center">
+                    <div class="text-red-500 text-5xl mb-4">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2">醫療保健</h4>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">病歷安全流轉與遠程醫療應用</p>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift text-center">
+                    <div class="text-blue-500 text-5xl mb-4">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2">零售電商</h4>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">整合供應鏈與優化客戶體驗</p>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift text-center">
+                    <div class="text-purple-500 text-5xl mb-4">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2">物聯網</h4>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">智能設備雲端連接與遠程控制</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Threats Section -->
+    <section id="threats" class="py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">API 資安威脅的演變與衝擊</h2>
+                <div class="w-24 h-1 bg-red-500 mx-auto mb-8"></div>
+            </div>
+
+            <!-- Threat Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-700">
+                    <div class="text-red-500 text-4xl mb-4">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2 text-red-700 dark:text-red-300">10倍風險</h4>
+                    <p class="text-red-600 dark:text-red-400">
+                        API 漏洞導致的資料外洩數量是其他類型安全漏洞的 10 倍
+                    </p>
+                </div>
+                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 border border-orange-200 dark:border-orange-700">
+                    <div class="text-orange-500 text-4xl mb-4">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2 text-orange-700 dark:text-orange-300">21% 增長</h4>
+                    <p class="text-orange-600 dark:text-orange-400">
+                        2024 年 Q3 API 資安漏洞較上一季增加 21%
+                    </p>
+                </div>
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-6 border border-yellow-200 dark:border-yellow-700">
+                    <div class="text-yellow-500 text-4xl mb-4">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2 text-yellow-700 dark:text-yellow-300">540萬用戶</h4>
+                    <p class="text-yellow-600 dark:text-yellow-400">
+                        Twitter API 組合漏洞導致 540 萬筆用戶資料遭竊
+                    </p>
+                </div>
+            </div>
+
+            <!-- OWASP API Top 10 -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-bold mb-8 text-center">OWASP API Security Top 10 (2023)</h3>
+                <div class="bg-white dark:bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+                        <div class="space-y-4">
+                            <div class="border-l-4 border-red-500 pl-4 py-2">
+                                <h5 class="font-bold text-red-600 dark:text-red-400">API1: 權限不當的物件級授權</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">未在每個存取數據的函數中驗證用戶權限</p>
+                            </div>
+                            <div class="border-l-4 border-orange-500 pl-4 py-2">
+                                <h5 class="font-bold text-orange-600 dark:text-orange-400">API2: 失效的身份驗證</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">身份驗證機制實施不當，允許令牌竊取</p>
+                            </div>
+                            <div class="border-l-4 border-yellow-500 pl-4 py-2">
+                                <h5 class="font-bold text-yellow-600 dark:text-yellow-400">API3: 權限不當的物件屬性級授權</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">允許存取或修改不應接觸的特定數據欄位</p>
+                            </div>
+                            <div class="border-l-4 border-green-500 pl-4 py-2">
+                                <h5 class="font-bold text-green-600 dark:text-green-400">API4: 無限制的資源消耗</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">未對 API 請求頻率或負載設限，導致 DoS</p>
+                            </div>
+                            <div class="border-l-4 border-blue-500 pl-4 py-2">
+                                <h5 class="font-bold text-blue-600 dark:text-blue-400">API5: 功能級授權失效</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">存取控制策略複雜，可繞過權限檢查</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="border-l-4 border-indigo-500 pl-4 py-2">
+                                <h5 class="font-bold text-indigo-600 dark:text-indigo-400">API6: 無限制存取敏感業務流程</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">未限制購買、評論等業務流程的自動化濫用</p>
+                            </div>
+                            <div class="border-l-4 border-purple-500 pl-4 py-2">
+                                <h5 class="font-bold text-purple-600 dark:text-purple-400">API7: 伺服器端請求偽造 (SSRF)</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">未驗證用戶提供的 URI，強迫應用程式發送請求</p>
+                            </div>
+                            <div class="border-l-4 border-pink-500 pl-4 py-2">
+                                <h5 class="font-bold text-pink-600 dark:text-pink-400">API8: 安全性設定錯誤</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">因人為疏忽或未遵循安全最佳實踐產生漏洞</p>
+                            </div>
+                            <div class="border-l-4 border-gray-500 pl-4 py-2">
+                                <h5 class="font-bold text-gray-600 dark:text-gray-400">API9: 不當的資產管理</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">缺乏完整 API 文件，產生「殭屍 API」風險</p>
+                            </div><div class="border-l-4 border-red-700 pl-4 py-2">
+                                <h5 class="font-bold text-red-700 dark:text-red-500">API10: 不安全地使用 API</h5>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">過度信任第三方 API，未進行充分驗證</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attack Impact Chart -->
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-8">API 攻擊影響分析</h3>
+                <div id="threatImpactChart" class="w-full h-96"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section id="security" class="py-20 bg-gray-100 dark:bg-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">現代 API 安全防護與管理策略</h2>
+                <div class="w-24 h-1 bg-primary-500 mx-auto mb-8"></div>
+            </div>
+
+            <!-- Traditional Limitations -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-bold mb-8 text-center text-red-600 dark:text-red-400">傳統資安方法的侷限性</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-700">
+                        <div class="text-red-500 text-3xl mb-4">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4 class="text-lg font-bold mb-2 text-red-700 dark:text-red-300">WAF 的不足</h4>
+                        <p class="text-sm text-red-600 dark:text-red-400">難以偵測業務邏輯攻擊和客戶端威脅</p>
+                    </div>
+                    <div class="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 border border-orange-200 dark:border-orange-700">
+                        <div class="text-orange-500 text-3xl mb-4">
+                            <i class="fas fa-puzzle-piece"></i>
+                        </div>
+                        <h4 class="text-lg font-bold mb-2 text-orange-700 dark:text-orange-300">單點式防禦</h4>
+                        <p class="text-sm text-orange-600 dark:text-orange-400">孤立工具無法協同防禦形成保護網</p>
+                    </div>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-6 border border-yellow-200 dark:border-yellow-700">
+                        <div class="text-yellow-500 text-3xl mb-4">
+                            <i class="fas fa-eye-slash"></i>
+                        </div>
+                        <h4 class="text-lg font-bold mb-2 text-yellow-700 dark:text-yellow-300">評估視角偏差</h4>
+                        <p class="text-sm text-yellow-600 dark:text-yellow-400">內部視角評估容易產生防禦盲點</p>
+                    </div>
+                    <div class="bg-pink-50 dark:bg-pink-900/20 rounded-xl p-6 border border-pink-200 dark:border-pink-700">
+                        <div class="text-pink-500 text-3xl mb-4">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <h4 class="text-lg font-bold mb-2 text-pink-700 dark:text-pink-300">資安技術債</h4>
+                        <p class="text-sm text-pink-600 dark:text-pink-400">缺乏長遠規劃累積技術債務</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modern Defense Architecture -->
+            <div class="mb-16">
+                <h3 class="text-2xl font-bold mb-8 text-center text-green-600 dark:text-green-400">多層次防禦架構</h3>
+                <div class="relative">
+                    <!-- Security Architecture Diagram -->
+                    <div class="mermaid bg-white dark:bg-gray-700 rounded-xl p-8 shadow-lg" id="securityArchitecture"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift">
+                        <div class="text-blue-500 text-4xl mb-4">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3 text-blue-600 dark:text-blue-400">API 閘道器</h4>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">負責集中管理 API 流量、路由、基本身份驗證與存取控制</p>
+                        <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                            <li>• OAuth、mTLS 認證</li>
+                            <li>• 流量限制 (Rate Limiting)</li>
+                            <li>• 基本 DoS 防護</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift">
+                        <div class="text-purple-500 text-4xl mb-4">
+                            <i class="fas fa-firewall"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3 text-purple-600 dark:text-purple-400">WAF 防火牆</h4>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">邊界防護，擅長阻擋 OWASP Top 10 傳統攻擊</p>
+                        <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                            <li>• SQL Injection 防護</li>
+                            <li>• XSS 攻擊阻擋</li>
+                            <li>• DDoS 防護</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white dark:bg-gray-700 rounded-xl p-6 shadow-lg hover-lift">
+                        <div class="text-green-500 text-4xl mb-4">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3 text-green-600 dark:text-green-400">專用 API 防護</h4>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">AI 驅動的深度防護，覆蓋完整生命週期</p>
+                        <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                            <li>• 自動化 API 探索</li>
+                            <li>• 行為分析與濫用防護</li>
+                            <li>• 業務邏輯攻擊防護</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strategy Recommendations -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+                <h3 class="text-2xl font-bold mb-8 text-center">策略性建議與實踐指南</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-bold">1</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-2">全面 API 盤點與風險評估</h4>
+                                <p class="text-blue-100 text-sm">透過自動化工具持續探索，建立完整 API 清單，識別影子 API 與評估攻擊面</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-bold">2</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-2">實施強大身份驗證與授權</h4>
+                                <p class="text-blue-100 text-sm">採用多層次驗證機制，嚴格區分驗證與授權，確保用戶只能存取應得資源</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-bold">3</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-2">AI 驅動持續監控</h4>
+                                <p class="text-blue-100 text-sm">利用行為分析技術建立正常使用基線，即時發現異常行為與潛在威脅</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-bold">4</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-2">整合安全框架與流程</h4>
+                                <p class="text-blue-100 text-sm">將NIST CSF 或 OWASP 框架融入營運，建立自動化應變劇本</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-bold">5</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-2">克服組織與資源挑戰</h4>
+                                <p class="text-blue-100 text-sm">配置專職人員與充足預算，考慮導入 MDR 服務或與 MSSP 合作</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                <span class="text-sm font-bold">6</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-2">定期更新與版本控制</h4>
+                                <p class="text-blue-100 text-sm">確保 API 定期更新納入安全補丁，妥善管理版本避免舊版本成為破口</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center space-y-8">
+                <div class="flex justify-center space-x-6">
+                    <i class="fas fa-shield-alt text-4xl text-primary-400"></i>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3 class="text-2xl font-bold">作者資訊</h3>
+                    <div class="text-lg">
+                        <p class="text-gray-300">作者：<span class="text-white font-semibold">Jim Huang</span></p></div>
+                </div>
+
+                <div class="flex justify-center space-x-6"><a href="https://twitter.com/jimhuang" class="text-gray-400 hover:text-white transition-colors duration-200">
+                        <i class="fab fa-twitter text-2xl"></i>
+                    </a><a href="https://linkedin.com/in/jimhuang" class="text-gray-400 hover:text-white transition-colors duration-200">
+                        <i class="fab fa-linkedin text-2xl"></i>
+                    </a>
+                    <a href="https://github.com/jimhuang" class="text-gray-400 hover:text-white transition-colors duration-200">
+                        <i class="fab fa-github text-2xl"></i>
+                    </a>
+                </div>
+
+                <div class="border-t border-gray-700 pt-8">
+                    <p class="text-gray-400">
+                        © 2025 Jim Huang. All rights reserved. | 
+                        本報告內容僅供學術研究與教育用途，如需商業使用請聯繫作者授權。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        // Check for saved theme preference or default to system preference
+        const savedTheme = localStorage.getItem('theme') ??
+                          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+        if (savedTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const theme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        });
+
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: html.classList.contains('dark') ? 'dark' : 'default'
+        });
+
+        // Security Architecture Diagram
+        const securityDiagram = `
+            graph TD
+                A[用戶請求] --> B[API 閘道器]
+                B --> C[WAF 防火牆]
+                C --> D[專用 API 防護]
+                D --> E[後端服務]
+                
+                F[AI 威脅分析] --> D
+                G[行為基線] --> F
+                H[零信任驗證] --> B
+                I[左移安全] --> E
+                
+                style A fill:#e1f5fe
+                style B fill:#f3e5f5
+                style C fill:#fff3e0
+                style D fill:#e8f5e8
+                style E fill:#fce4ec
+                style F fill:#f0f4c3
+                style G fill:#e0f2f1
+                style H fill:#fce4ec
+                style I fill:#e8f5e8
+        `;
+
+        document.getElementById('securityArchitecture').innerHTML = securityDiagram;
+
+        // API Growth Chart
+        const apiGrowthChart = echarts.init(document.getElementById('apiGrowthChart'), html.classList.contains('dark') ? 'dark' : null);
+        const apiGrowthOption = {
+            title: {
+                text: 'API 安全威脅增長趨勢'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['API 漏洞數量', '資料外洩事件', '攻擊複雜度']
+            },
+            xAxis: {
+                type: 'category',
+                data: ['2020', '2021', '2022', '2023', '2024']
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name: 'API 漏洞數量',
+                    type: 'line',
+                    data: [120, 180, 250, 320, 420],
+                    smooth: true,
+                    lineStyle: { color: '#ef4444' },
+                    areaStyle: { color: 'rgba(239, 68, 68, 0.1)' }
+                },
+                {
+                    name: '資料外洩事件',
+                    type: 'line',
+                    data: [50, 85, 120, 160, 210],
+                    smooth: true,
+                    lineStyle: { color: '#f97316' },
+                    areaStyle: { color: 'rgba(249, 115, 22, 0.1)' }
+                },
+                {
+                    name: '攻擊複雜度',
+                    type: 'line',
+                    data: [60, 75, 90, 110, 140],
+                    smooth: true,
+                    lineStyle: { color: '#eab308' },
+                    areaStyle: { color: 'rgba(234, 179, 8, 0.1)' }
+                }
+            ]
+        };
+        apiGrowthChart.setOption(apiGrowthOption);
+
+        // Threat Impact Chart
+        const threatChart = echarts.init(document.getElementById('threatImpactChart'), html.classList.contains('dark') ? 'dark' : null);
+        const threatOption = {
+            title: {
+                text: 'API 攻擊影響分布'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: '{a} <br/>{b}: {c}% ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left'
+            },
+            series: [
+                {
+                    name: '影響類型',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['60%', '50%'],
+                    data: [
+                        { value: 35, name: '資料外洩', itemStyle: { color: '#ef4444' } },
+                        { value: 25, name: '服務中斷', itemStyle: { color: '#f97316' } },
+                        { value: 20, name: '帳戶接管', itemStyle: { color: '#eab308' } },
+                        { value: 12, name: '業務邏輯濫用', itemStyle: { color: '#22c55e' } },
+                        { value: 8, name: '零時差攻擊', itemStyle: { color: '#3b82f6' } }
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        };
+        threatChart.setOption(threatOption);
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all sections for animation
+        document.querySelectorAll('section').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(30px)';
+            section.style.transition = 'all 0.6s ease-out';
+            observer.observe(section);
+        });
+
+        // Update charts on theme change
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'theme') {
+                location.reload();
+            }
+        });
+
+        // Responsive chart resize
+        window.addEventListener('resize', function() {
+            apiGrowthChart.resize();
+            threatChart.resize();
+        });
+    </script>
+</body>
+</html>

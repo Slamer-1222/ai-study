@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 開發安全格局：CVE-2025-49596 的啟示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Energetic & Playful -->
+    <!-- Application Structure Plan: The infographic follows a narrative structure. It starts with a Hero section to grab attention with the core vulnerability (CVE-2025-49596) and its high CVSS score. It then transitions to a "Vulnerability Deep Dive," using a flowchart to explain the attack chain. The next section, "The Ripple Effect," broadens the scope to the wider AI risk landscape, using a combination of charts and info cards. "The Defensive Playbook" section presents actionable guidance by visualizing key security frameworks and mitigation strategies. Finally, a "Conclusion" summarizes the key message of the "AI Security Arms Race." This top-down structure (specific case -> broad problem -> solutions) is chosen for its logical flow and educational effectiveness. -->
+    <!-- Visualization & Content Choices:
+        - Data Point: CVSS Score 9.4 -> Goal: Inform/Emphasize -> Viz/Method: Donut Chart -> Justification: High impact for a single, critical metric. -> Library: Chart.js (Canvas).
+        - Data Point: CVE-2025-49596 Attack Chain -> Goal: Organize/Explain Process -> Viz/Method: HTML/CSS Flowchart -> Justification: Clearly visualizes the multi-step attack process without complex graphics. -> Library/Method: HTML/CSS with Tailwind. CONFIRMING NO SVG/Mermaid.
+        - Data Point: AI-Generated Code Risk (30-50%) -> Goal: Inform/Compare -> Viz/Method: Bar Chart -> Justification: Effectively shows the significant percentage of insecure code. -> Library: Chart.js (Canvas).
+        - Data Point: Key Security Frameworks (NIST, OWASP, ISO) -> Goal: Compare/Organize -> Viz/Method: Radar Chart -> Justification: Compares frameworks across multiple qualitative dimensions (e.g., Governance, Technical Controls) in a single view. -> Library: Chart.js (Canvas).
+        - Data Point: Broader Risk Categories (MLOps, Supply Chain, etc.) -> Goal: Organize/Inform -> Viz/Method: Grid of styled info cards with Unicode icons -> Justification: Presents diverse qualitative information in a scannable, visually appealing format. -> Library/Method: HTML/CSS with Tailwind. CONFIRMING NO SVG/Mermaid.
+        - Data Point: Mitigation Strategies -> Goal: Organize/Inform -> Viz/Method: A multi-column list with icons. -> Justification: Provides a comprehensive yet digestible overview of actionable steps. -> Library/Method: HTML/CSS with Tailwind. CONFIRMING NO SVG/Mermaid.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f7f9fc; color: #073B4C; }
+        .hero-gradient { background: linear-gradient(135deg, #118AB2, #06D6A0); }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); transition: all 0.3s ease-in-out; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        h1, h2, h3 { font-weight: 900; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <main>
+        <section class="hero-gradient text-white py-20 px-4">
+            <div class="container mx-auto text-center">
+                <h1 class="text-4xl md:text-6xl mb-4">駕馭 AI 開發安全格局</h1>
+                <p class="text-lg md:text-2xl max-w-3xl mx-auto opacity-90">以 Anthropic MCP RCE 漏洞 (CVE-2025-49596) 為鑑，深入剖析 AI 輔助開發的潛在風險與防禦之道。</p>
+            </div>
+        </section>
+
+        <section id="cve-deep-dive" class="py-16 md:py-24 px-4">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl text-[#118AB2] mb-4">漏洞焦點：CVE-2025-49596</h2>
+                    <p class="max-w-3xl mx-auto text-lg">此關鍵漏洞不僅是一個孤立事件，它揭示了傳統安全缺陷如何在現代 AI 開發工具中被放大，構成嚴峻威脅。</p>
+                </div>
+
+                <div class="grid md:grid-cols-5 gap-8 items-center">
+                    <div class="md:col-span-3 card p-8">
+                        <h3 class="text-2xl mb-6 text-center">攻擊鏈剖析：一場新舊漏洞的協奏</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-4">
+                                <div class="flex-shrink-0 bg-[#FFD166] text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">1</div>
+                                <p class="text-lg">攻擊者透過惡意網站，誘騙使用 MCP Inspector 的開發者訪問。</p>
+                            </div>
+                            <div class="pl-7 text-3xl text-gray-300">↓</div>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-shrink-0 bg-[#118AB2] text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">2</div>
+                                <p class="text-lg">利用長達 19 年的「0.0.0.0 Day」瀏覽器缺陷，將請求導向開發者本機。</p>
+                            </div>
+                             <div class="pl-7 text-3xl text-gray-300">↓</div>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-shrink-0 bg-[#06D6A0] text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">3</div>
+                                <p class="text-lg">結合 MCP Inspector 預設配置中缺乏身份驗證的 CSRF 漏洞。</p>
+                            </div>
+                             <div class="pl-7 text-3xl text-gray-300">↓</div>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-shrink-0 bg-[#FF6B6B] text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl">4</div>
+                                <p class="text-lg">成功在開發者機器上執行遠端程式碼 (RCE)，取得完全控制權。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 card p-8 text-center">
+                        <h3 class="text-2xl mb-4">嚴重性評級</h3>
+                        <div class="chart-container h-[250px] max-h-[250px]">
+                            <canvas id="cvssScoreChart"></canvas>
+                        </div>
+                        <p class="mt-4 text-lg">CVSS v4.0 評分高達 <span class="font-bold text-[#FF6B6B] text-xl">9.4</span>，被列為「嚴重」級別，突顯其巨大潛在危害。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="risk-landscape" class="bg-gray-50 py-16 md:py-24 px-4">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl text-[#118AB2] mb-4">漣漪效應：不斷演變的 AI 開發風險</h2>
+                    <p class="max-w-3xl mx-auto text-lg">CVE-2025-49596 只是冰山一角。AI 輔助開發的普及，正催生並放大一系列複雜的安全挑戰。</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                     <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-[#118AB2]">🤖 AI 生成程式碼風險</h3>
+                        <p class="mb-4">研究顯示，高達 30-50% 的 AI 生成程式碼可能包含安全漏洞，如 SQL 注入或硬編碼金鑰。</p>
+                        <div class="chart-container h-[200px] max-h-[200px]">
+                             <canvas id="insecureCodeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-[#118AB2]">🔗 MLOps 供應鏈漏洞</h3>
+                        <p>從數據集到相依套件，MLOps 管線的任何環節都可能被植入惡意程式碼，Hugging Face 的惡意模型事件即為警訊。</p>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-[#118AB2]">🎯 提示注入與模型操縱</h3>
+                        <p>攻擊者可透過精心設計的提示，繞過安全護欄，洩漏敏感資訊、生成有害內容或執行未授權操作。</p>
+                    </div>
+                     <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-[#118AB2]">☣️ 訓練資料投毒</h3>
+                        <p>透過污染訓練資料，攻擊者能扭曲模型學習過程，導致模型產生有偏見或完全錯誤的結果。</p>
+                    </div>
+                     <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-[#118AB2]">🔑 不安全的預設配置</h3>
+                        <p>為求開發便利，許多 AI 工具預設缺乏嚴格的身份驗證和加密，為開發者埋下「安全債務」。</p>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-2 text-[#118AB2]">📈 傳統漏洞的放大</h3>
+                        <p>SQLi、CSRF 等傳統漏洞，在高度互聯的 AI 生態系中，其影響範圍和破壞力被顯著放大。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="defensive-playbook" class="py-16 md:py-24 px-4">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                     <h2 class="text-3xl md:text-4xl text-[#118AB2] mb-4">防禦手冊：建立彈性安全體系</h2>
+                    <p class="max-w-3xl mx-auto text-lg">面對 AI 帶來的挑戰，我們需要結合權威安全框架與多層次的技術策略，打造縱深防禦。</p>
+                </div>
+
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <div>
+                        <h3 class="text-2xl text-center mb-6">關鍵安全框架指導</h3>
+                         <p class="text-center mb-6 text-slate-600">NIST、OWASP 與 ISO 等框架為 AI 安全治理提供了結構化方法。下圖比較了它們在不同安全維度上的側重點。</p>
+                        <div class="card p-6">
+                            <div class="chart-container h-[350px] max-h-[400px] md:h-[400px]">
+                                <canvas id="frameworksRadarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl text-center mb-6">綜合緩解策略</h3>
+                        <p class="text-center mb-6 text-slate-600">從開發生命週期到基礎設施，每一層都需部署針對性的防禦措施。</p>
+                        <div class="card p-8 space-y-4">
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl text-[#06D6A0]">🛡️</span>
+                                <div>
+                                    <h4 class="font-bold">安全 AI 開發生命週期 (AI-SDLC)</h4>
+                                    <p class="text-sm text-gray-600">將安全審查、靜態分析和自動化測試整合到開發的每個階段。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl text-[#06D6A0]">📦</span>
+                                <div>
+                                    <h4 class="font-bold">資料與模型安全</h4>
+                                    <p class="text-sm text-gray-600">實施強加密、資料淨化、最小權限原則及對抗性攻擊防禦。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl text-[#06D6A0]">🏗️</span>
+                                <div>
+                                    <h4 class="font-bold">基礎設施與管線強化</h4>
+                                    <p class="text-sm text-gray-600">保護 MLOps 管線，強化 IAM，採用安全的容器化實踐。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl text-[#06D6A0]">🌐</span>
+                                <div>
+                                    <h4 class="font-bold">採用零信任架構</h4>
+                                    <p class="text-sm text-gray-600">秉持「從不信任，永遠驗證」原則，對所有存取進行持續驗證。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <span class="text-2xl text-[#06D6A0]">🛠️</span>
+                                <div>
+                                    <h4 class="font-bold">利用專用 AI 安全工具</h4>
+                                    <p class="text-sm text-gray-600">部署 AI 驅動的端點保護、事件回應和威脅追蹤平台。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="conclusion" class="bg-[#073B4C] text-white py-20 px-4">
+            <div class="container mx-auto text-center">
+                <h2 class="text-3xl md:text-4xl mb-6">結論：一場持續的 AI 安全軍備競賽</h2>
+                <p class="text-lg md:text-xl max-w-4xl mx-auto opacity-90">隨著攻擊者利用 AI 技術發動更複雜的攻擊，防禦方也必須採用 AI 來增強威脅偵測和自動化回應能力。在這場不斷升級的競賽中，持續警惕、擁抱多層次防禦、並積極參與行業協作，是確保 AI 技術安全、負責任發展的唯一途徑。</p>
+            </div>
+        </section>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const chartColors = {
+        red: '#FF6B6B',
+        yellow: '#FFD166',
+        green: '#06D6A0',
+        blue: '#118AB2',
+        darkBlue: '#073B4C',
+        lightGray: '#f1f5f9'
+    };
+
+    const processLabel = (label) => {
+        if (label.length <= 16) return label;
+        const words = label.split(' ');
+        const lines = [];
+        let currentLine = '';
+        words.forEach(word => {
+            if ((currentLine + ' ' + word).trim().length > 16) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = (currentLine + ' ' + word).trim();
+            }
+        });
+        if (currentLine) lines.push(currentLine);
+        return lines;
+    };
+    
+    const tooltipTitleCallback = (tooltipItems) => {
+        const item = tooltipItems[0];
+        let label = item.chart.data.labels[item.dataIndex];
+        return Array.isArray(label) ? label.join(' ') : label;
+    };
+
+    const defaultChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { color: chartColors.darkBlue, font: { size: 14 } }
+            },
+            tooltip: {
+                callbacks: { title: tooltipTitleCallback }
+            }
+        },
+    };
+
+    new Chart(document.getElementById('cvssScoreChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['CVSS 嚴重性', ''],
+            datasets: [{
+                data: [9.4, 10 - 9.4],
+                backgroundColor: [chartColors.red, chartColors.lightGray],
+                borderColor: '#ffffff',
+                borderWidth: 4,
+                cutout: '70%',
+            }]
+        },
+        options: {
+            ...defaultChartOptions,
+            plugins: {
+                ...defaultChartOptions.plugins,
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `評分: ${context.raw}`
+                    }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('insecureCodeChart'), {
+        type: 'bar',
+        data: {
+            labels: ['AI 生成程式碼'],
+            datasets: [{
+                label: '含漏洞程式碼比例 (%)',
+                data: [40], 
+                backgroundColor: chartColors.yellow,
+                borderRadius: 5,
+                barPercentage: 0.5,
+            }]
+        },
+        options: {
+            ...defaultChartOptions,
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { display: false },
+                    ticks: { color: chartColors.darkBlue }
+                },
+                y: {
+                     grid: { display: false },
+                     ticks: { display: false }
+                }
+            },
+            plugins: {
+                ...defaultChartOptions.plugins,
+                legend: { display: false }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('frameworksRadarChart'), {
+        type: 'radar',
+        data: {
+            labels: [
+                '風險管理', '技術控制', '治理與策略', 
+                processLabel('生命週期整合'), '供應鏈安全', '法規遵循'
+            ],
+            datasets: [{
+                label: 'NIST AI RMF',
+                data: [5, 3, 5, 5, 4, 4],
+                backgroundColor: 'rgba(255, 107, 107, 0.2)',
+                borderColor: chartColors.red,
+                pointBackgroundColor: chartColors.red,
+            }, {
+                label: 'OWASP Top 10 for LLM',
+                data: [3, 5, 2, 4, 5, 2],
+                backgroundColor: 'rgba(6, 214, 160, 0.2)',
+                borderColor: chartColors.green,
+                pointBackgroundColor: chartColors.green,
+            }, {
+                label: 'ISO/IEC 27001',
+                data: [4, 5, 5, 4, 5, 5],
+                backgroundColor: 'rgba(17, 138, 178, 0.2)',
+                borderColor: chartColors.blue,
+                pointBackgroundColor: chartColors.blue,
+            }]
+        },
+        options: {
+            ...defaultChartOptions,
+            scales: {
+                r: {
+                    angleLines: { color: '#e2e8f0' },
+                    grid: { color: '#e2e8f0' },
+                    pointLabels: {
+                        font: { size: 12 },
+                        color: chartColors.darkBlue
+                    },
+                    ticks: {
+                        backdropColor: 'rgba(255, 255, 255, 0.75)',
+                        color: chartColors.blue,
+                        stepSize: 1
+                    },
+                    min: 0,
+                    max: 5
+                }
+            },
+            plugins: {
+                ...defaultChartOptions.plugins,
+                legend: {
+                    position: 'top',
+                },
+            }
+        }
+    });
+});
+</script>
+</body>
+</html>

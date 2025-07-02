@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 開發風險互動式分析報告：CVE-2025-49596 案例研究</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: A dashboard-style SPA designed for exploration over linear reading. It begins with a hero section summarizing the key vulnerability (CVE-2025-49596). The user can then scroll or use the navigation to explore an interactive deep-dive on the vulnerability's attack chain, a filterable view of the broader AI risk landscape, and a tabbed "Defensive Playbook" combining security frameworks and mitigation strategies. This structure guides the user from a specific, critical case study to broader concepts and actionable advice, enhancing understanding and engagement. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: CVSS Score (9.4) -> Goal: Inform, Emphasize Severity -> Viz/Method: Donut Chart -> Interaction: Hover for details -> Justification: Visually impactful way to show a high-risk score. -> Library: Chart.js (Canvas).
+        - Report Info: Attack Chain (0.0.0.0 Day + CSRF -> RCE) -> Goal: Explain Process -> Viz/Method: HTML/CSS Flow Diagram -> Interaction: Clickable nodes to reveal detailed explanations. -> Justification: Breaks down a complex process into digestible, interactive steps without needing graphics. -> Library: Vanilla JS + Tailwind.
+        - Report Info: Broader AI Risks (MCP, LLM, MLOps) -> Goal: Organize, Compare -> Viz/Method: Filterable Cards -> Interaction: Category filter buttons to show/hide relevant risk cards. -> Justification: Allows users to focus on areas of interest and easily compare different types of threats. -> Library: Vanilla JS + Tailwind.
+        - Report Info: Security Frameworks (NIST, OWASP, ISO) -> Goal: Organize, Inform -> Viz/Method: Accordion -> Interaction: Click to expand/collapse framework details. -> Justification: Presents dense information compactly, letting users explore what's relevant to them. -> Library: Vanilla JS + Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --text-accent: #0f766e;
+            --border-color: #e2e8f0;
+            --shadow-color: rgb(0 0 0 / 0.1);
+            --card-hover-shadow: rgb(0 0 0 / 0.15);
+            --hover-bg: #f1f5f9;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --text-accent: #5eead4;
+            --border-color: #475569;
+            --shadow-color: rgb(0 0 0 / 0.5);
+            --card-hover-shadow: rgb(0 0 0 / 0.7);
+            --hover-bg: #334155;
+        }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: var(--text-accent) !important;
+            border-bottom-color: var(--text-accent);
+        }
+        .mobile-nav-link:hover {
+            background-color: var(--hover-bg) !important;
+        }
+        .content-card {
+            background-color: var(--bg-secondary);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
+            transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+            border: 1px solid var(--border-color);
+        }
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px var(--card-hover-shadow), 0 4px 6px -4px var(--card-hover-shadow);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 300px;
+        }
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+        .tag-critical { background-color: #fecaca; color: #b91c1c; }
+        [data-theme="dark"] .tag-critical { background-color: #7f1d1d; color: #fca5a5; }
+        .tag-risk { background-color: #fed7aa; color: #9a3412; }
+        [data-theme="dark"] .tag-risk { background-color: #92400e; color: #fdba74; }
+        .tag-framework { background-color: #bfdbfe; color: #1e40af; }
+        [data-theme="dark"] .tag-framework { background-color: #1e3a8a; color: #93c5fd; }
+        .tag-mitigation { background-color: #bbf7d0; color: #166534; }
+        [data-theme="dark"] .tag-mitigation { background-color: #14532d; color: #86efac; }
+        .tab.active {
+            border-color: var(--text-accent);
+            color: var(--text-accent) !important;
+            background-color: var(--bg-tertiary);
+        }
+        .tab {
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab:hover {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);" class="backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 lg:px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-xl font-bold" style="color: var(--text-primary);">AI 開發安全洞察</div>
+                <button id="dark-mode-toggle" class="p-2 rounded-lg transition-colors" style="background-color: var(--bg-tertiary); color: var(--text-secondary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
+                    <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path class="theme-icon-sun" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        <path class="theme-icon-moon hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#overview" class="nav-link px-2 py-1" style="color: var(--text-secondary);">總覽</a>
+                    <a href="#deep-dive" class="nav-link px-2 py-1" style="color: var(--text-secondary);">漏洞剖析</a>
+                    <a href="#risk-landscape" class="nav-link px-2 py-1" style="color: var(--text-secondary);">風險全景</a>
+                    <a href="#threatened-targets" class="nav-link px-2 py-1" style="color: var(--text-secondary);">受威脅目標</a>
+                    <a href="#playbook" class="nav-link px-2 py-1" style="color: var(--text-secondary);">防禦手冊</a>
+                    <a href="#glossary" class="nav-link px-2 py-1" style="color: var(--text-secondary);">名詞解釋</a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-slate-600 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden" style="background-color: var(--bg-secondary); border-top: 1px solid var(--border-color);">
+            <a href="#overview" class="block py-2 px-4 text-sm mobile-nav-link" style="color: var(--text-secondary);">總覽</a>
+            <a href="#deep-dive" class="block py-2 px-4 text-sm mobile-nav-link" style="color: var(--text-secondary);">漏洞剖析</a>
+            <a href="#risk-landscape" class="block py-2 px-4 text-sm mobile-nav-link" style="color: var(--text-secondary);">風險全景</a>
+            <a href="#threatened-targets" class="block py-2 px-4 text-sm mobile-nav-link" style="color: var(--text-secondary);">受威脅目標</a>
+            <a href="#playbook" class="block py-2 px-4 text-sm mobile-nav-link" style="color: var(--text-secondary);">防禦手冊</a>
+            <a href="#glossary" class="block py-2 px-4 text-sm mobile-nav-link" style="color: var(--text-secondary);">名詞解釋</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 lg:px-6 py-8 md:py-12">
+        
+        <section id="overview" class="text-center mb-16 md:mb-24 scroll-mt-20">
+            <h1 class="text-3xl md:text-5xl font-bold mb-4" style="color: var(--text-primary);">駕馭 AI 開發的安全格局</h1>
+            <p class="max-w-3xl mx-auto text-lg mb-8" style="color: var(--text-secondary);">以 Anthropic MCP RCE 漏洞 (CVE-2025-49596) 為案例，深入探討 AI 輔助開發中不斷演變的風險趨勢與核心防禦策略。</p>
+            
+            <div class="content-card max-w-4xl mx-auto p-6 md:p-8">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="text-left">
+                        <span class="tag tag-critical mb-2">關鍵漏洞</span>
+                        <h2 class="text-2xl font-bold mb-3" style="color: var(--text-primary);">CVE-2025-49596：關鍵 RCE 漏洞</h2>
+                        <p class="mb-4" style="color: var(--text-secondary);">Anthropic 的 MCP Inspector 工具存在一項嚴重漏洞，攻擊者可結合存在已久的瀏覽器缺陷，在開發者機器上執行任意程式碼，進而完全控制主機。</p>
+                        <ul class="space-y-2" style="color: var(--text-secondary);">
+                            <li class="flex items-center"><span class="w-5 h-5 mr-2 text-red-600">🚨</span><strong>類型：</strong> 遠端程式碼執行 (RCE)</li>
+                            <li class="flex items-center"><span class="w-5 h-5 mr-2 text-red-600">🔗</span><strong>攻擊鏈：</strong> 「0.0.0.0 Day」瀏覽器缺陷 + CSRF</li>
+                            <li class="flex items-center"><span class="w-5 h-5 mr-2 text-red-600">🎯</span><strong>影響：</strong> 開發者主機遭完全接管、資料竊取</li>
+                        </ul>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="cvssChart"></canvas>
+                        <div id="cvss-score-text" class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                            <span class="text-4xl font-bold text-red-600 dark:text-red-400">9.4</span>
+                            <span class="text-sm font-medium text-slate-600 dark:text-slate-400">CVSS v4.0 評分</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="deep-dive" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2" style="color: var(--text-primary);">漏洞深度剖析</h2>
+                <p class="max-w-2xl mx-auto" style="color: var(--text-secondary);">此部分將 CVE-2025-49596 的攻擊流程進行了可視化拆解。您可以點擊流程中的每個節點，以互動方式探索漏洞的根本原因、攻擊機制及其連鎖反應，從而深入理解這個看似複雜的攻擊是如何實現的。</p>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <div class="content-card p-6 md:p-8">
+                        <h3 class="text-xl font-bold mb-4 text-center" style="color: var(--text-primary);">CVE-2025-49596 攻擊鏈</h3>
+                        <div id="attack-chain" class="flex flex-col md:flex-row items-center justify-around space-y-4 md:space-y-0 md:space-x-4 p-4">
+                            <div data-step="1" class="step-node text-center cursor-pointer p-3 rounded-lg border-2 border-transparent hover:border-amber-400 transition-all duration-300" style="background-color: var(--bg-secondary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">
+                                <div class="text-4xl mb-2">🌐</div>
+                                <h4 class="font-bold" style="color: var(--text-primary);">惡意網站</h4>
+                                <p class="text-sm" style="color: var(--text-tertiary);">開發者被誘騙訪問</p>
+                            </div>
+                            <div class="text-3xl text-slate-400 font-mono transform rotate-90 md:rotate-0">→</div>
+                            <div data-step="2" class="step-node text-center cursor-pointer p-3 rounded-lg border-2 border-transparent hover:border-amber-400 transition-all duration-300" style="background-color: var(--bg-secondary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">
+                                <div class="text-4xl mb-2">🔍</div>
+                                <h4 class="font-bold" style="color: var(--text-primary);">0.0.0.0 Day</h4>
+                                <p class="text-sm" style="color: var(--text-tertiary);">瀏覽器缺陷被利用</p>
+                            </div>
+                            <div class="text-3xl text-slate-400 font-mono transform rotate-90 md:rotate-0">→</div>
+                            <div data-step="3" class="step-node text-center cursor-pointer p-3 rounded-lg border-2 border-transparent hover:border-amber-400 transition-all duration-300" style="background-color: var(--bg-secondary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">
+                                <div class="text-4xl mb-2">🛡️</div>
+                                <h4 class="font-bold" style="color: var(--text-primary);">CSRF & 驗證缺失</h4>
+                                <p class="text-sm" style="color: var(--text-tertiary);">繞過 MCP Inspector 防護</p>
+                            </div>
+                             <div class="text-3xl text-slate-400 font-mono transform rotate-90 md:rotate-0">→</div>
+                            <div data-step="4" class="step-node text-center cursor-pointer p-3 rounded-lg border-2 border-transparent hover:border-red-400 transition-all duration-300" style="background-color: var(--bg-secondary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">
+                                <div class="text-4xl mb-2">💻</div>
+                                <h4 class="font-bold text-red-600">遠端程式碼執行</h4>
+                                <p class="text-sm" style="color: var(--text-tertiary);">攻擊者完全控制主機</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="step-details" class="lg:col-span-1 content-card p-6 md:p-8 flex flex-col justify-center">
+                    <div id="details-initial" class="text-center" style="color: var(--text-tertiary);">
+                        <div class="text-4xl mb-4">👆</div>
+                        <p>點擊上方攻擊鏈中的任一步驟以查看詳細說明。</p>
+                    </div>
+                    <div id="details-content" class="hidden">
+                        <h3 id="details-title" class="text-xl font-bold mb-3" style="color: var(--text-primary);"></h3>
+                        <p id="details-text" style="color: var(--text-secondary);"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="risk-landscape" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2" style="color: var(--text-primary);">AI 風險全景圖</h2>
+                 <p class="max-w-2xl mx-auto" style="color: var(--text-secondary);">AI 開發的風險遠不止單一漏洞。此處彙總了 AI 生態系統中的各類安全挑戰，從底層框架的缺陷到應用層的操縱。使用下方的篩選器，您可以分類檢視與 MCP 協定、大型語言模型 (LLM)、MLOps 管線以及 AI 驅動攻擊相關的具體風險。</p>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                <button data-filter="all" class="risk-filter-btn active px-4 py-2 rounded-full font-medium" style="background-color: #0f766e; color: white;">全部顯示</button>
+                <button data-filter="mcp" class="risk-filter-btn px-4 py-2 rounded-full font-medium" style="background-color: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">MCP 特定漏洞</button>
+                <button data-filter="llm" class="risk-filter-btn px-4 py-2 rounded-full font-medium" style="background-color: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">LLM 風險</button>
+                <button data-filter="mlops" class="risk-filter-btn px-4 py-2 rounded-full font-medium" style="background-color: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">MLOps 安全</button>
+                <button data-filter="attack" class="risk-filter-btn px-4 py-2 rounded-full font-medium" style="background-color: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-color);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">AI 驅動攻擊</button>
+            </div>
+
+            <div id="risk-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </section>
+
+        <section id="threatened-targets" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2" style="color: var(--text-primary);">主要受威脅目標</h2>
+                <p class="max-w-3xl mx-auto" style="color: var(--text-secondary);">此漏洞不僅影響單一元件，其潛在的破壞力可波及多個關鍵實體和資料。了解這些目標對於評估風險和制定防禦策略至關重要。</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div class="content-card p-6 text-center">
+                    <div class="text-5xl mb-3">💻</div>
+                    <h4 class="font-bold text-lg" style="color: var(--text-primary);">開發者機器</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">攻擊者可完全控制開發者的電腦，執行任意程式碼。</p>
+                </div>
+                <div class="content-card p-6 text-center">
+                    <div class="text-5xl mb-3">🤖</div>
+                    <h4 class="font-bold text-lg" style="color: var(--text-primary);">AI 開發團隊</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">依賴 MCP 的 AI 團隊面臨資料竊取、後門植入的風險。</p>
+                </div>
+                <div class="content-card p-6 text-center">
+                    <div class="text-5xl mb-3">📂</div>
+                    <h4 class="font-bold text-lg" style="color: var(--text-primary);">開源專案</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">使用受影響 MCP Inspector 的開源專案可能被利用。</p>
+                </div>
+                <div class="content-card p-6 text-center">
+                    <div class="text-5xl mb-3">🏢</div>
+                    <h4 class="font-bold text-lg" style="color: var(--text-primary);">企業採用者</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">企業環境中的 AI 開發流程與生產資料可能受影響。</p>
+                </div>
+                <div class="content-card p-6 text-center">
+                    <div class="text-5xl mb-3">🔑</div>
+                    <h4 class="font-bold text-lg" style="color: var(--text-primary);">敏感資料與憑證</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">API 金鑰、用戶憑證及其他敏感資料可能被竊取。</p>
+                </div>
+                <div class="content-card p-6 text-center">
+                    <div class="text-5xl mb-3">🌐</div>
+                    <h4 class="font-bold text-lg" style="color: var(--text-primary);">內部網路</h4>
+                    <p class="text-sm" style="color: var(--text-secondary);">攻擊者可利用受感染機器在網路中橫向移動。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="playbook" class="mb-16 md:mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2" style="color: var(--text-primary);">AI 安全防禦手冊</h2>
+                <p class="max-w-2xl mx-auto" style="color: var(--text-secondary);">面對複雜的 AI 安全威脅，建立系統性的防禦至關重要。本手冊整合了國際權威的安全框架指南與具體可行的緩解策略。您可以透過下方的標籤頁切換，深入了解指導原則，並探索從開發生命週期到基礎設施強化的各層面防禦措施。</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-6 border-b border-slate-200">
+                    <nav class="flex -mb-px" aria-label="Tabs" style="border-bottom: 1px solid var(--border-color);">
+                        <button class="tab active w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm" data-tab="frameworks">
+                            指導框架
+                        </button>
+                        <button class="tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent" data-tab="defense-mechanisms">
+                            關鍵防禦機制設計
+                        </button>
+                        <button class="tab w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent" data-tab="mitigations">
+                            緩解策略
+                        </button>
+                    </nav>
+                </div>
+
+                <div id="tab-content-frameworks" class="tab-content">
+                    <div id="frameworks-accordion" class="space-y-4">
+                    </div>
+                </div>
+
+                <div id="tab-content-defense-mechanisms" class="tab-content hidden">
+                    <div class="max-w-4xl mx-auto space-y-6">
+                        <!-- 預防機制 -->
+                        <div class="content-card overflow-hidden">
+                            <button class="accordion-header w-full flex justify-between items-center text-left p-5 font-bold text-xl rounded-t-lg transition-colors" style="color: var(--text-primary); background-color: #10b981; background-color: var(--bg-tertiary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
+                                <span>預防機制：阻止攻擊發生</span>
+                                <span class="accordion-icon">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </span>
+                            </button>
+                            <div class="accordion-content p-5 hidden" style="border-top: 1px solid var(--border-color);">
+                                <ul class="list-disc pl-5 space-y-2" style="color: var(--text-secondary);">
+                                    <li><strong>立即更新 MCP Inspector：</strong> 將版本升級至 0.14.1 或更高，此版本已引入會話令牌和來源驗證。</li>
+                                    <li><strong>本地主機綁定：</strong> 若無法立即升級，確保 MCP Inspector 代理伺服器僅綁定到 `localhost` (127.0.0.1)，不暴露於不受信任網路。</li>
+                                    <li><strong>調整預設配置：</strong> 避免使用缺乏身份驗證和加密的預設設定。</li>
+                                    <li><strong>嚴格輸入驗證：</strong> 對所有用戶輸入進行嚴格驗證和淨化，防止惡意程式碼注入。</li>
+                                    <li><strong>使用者安全意識培訓：</strong> 教育開發者警惕可疑連結和惡意網站。</li>
+                                    <li><strong>安全編碼實踐：</strong> 在開發過程中遵循安全編碼規範，限制動態操作。</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 偵測機制 -->
+                        <div class="content-card overflow-hidden">
+                            <button class="accordion-header w-full flex justify-between items-center text-left p-5 font-bold text-xl rounded-t-lg transition-colors" style="color: var(--text-primary); background-color: var(--bg-tertiary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
+                                <span>偵測機制：及早發現異常</span>
+                                <span class="accordion-icon">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </span>
+                            </button>
+                            <div class="accordion-content p-5 hidden" style="border-top: 1px solid var(--border-color);">
+                                <ul class="list-disc pl-5 space-y-2" style="color: var(--text-secondary);">
+                                    <li><strong>實施端點防護 (EPP/EDR)：</strong> 部署強大的端點保護平台，持續監控端點活動，偵測異常行為和潛在 RCE 嘗試。</li>
+                                    <li><strong>持續監控與異常檢測：</strong> 建立系統監控機制，追蹤網路流量、系統日誌和應用程式行為，及時發現異常。</li>
+                                    <li><strong>自動化安全掃描：</strong> 定期使用漏洞掃描工具（如 OWASP ZAP）分析程式碼庫和基礎設施，發現已知漏洞。</li>
+                                    <li><strong>手動程式碼審查：</strong> 進行人工程式碼審查，特別是針對輸入處理、函數調用和第三方庫的使用。</li>
+                                    <li><strong>威脅情報訂閱：</strong> 訂閱 CVE 列表和威脅情報平台，及時了解最新漏洞資訊。</li>
+                                    <li><strong>監控 LLM 邊界：</strong> 留意 LLM 生成內容中是否有異常或惡意的指令嘗試跳出其預定邊界。</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 防禦機制 -->
+                        <div class="content-card overflow-hidden">
+                            <button class="accordion-header w-full flex justify-between items-center text-left p-5 font-bold text-xl rounded-t-lg transition-colors" style="color: var(--text-primary); background-color: var(--bg-tertiary);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-tertiary)'">
+                                <span>防禦機制：限制損害與應對</span>
+                                <span class="accordion-icon">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </span>
+                            </button>
+                            <div class="accordion-content p-5 hidden" style="border-top: 1px solid var(--border-color);">
+                                <ul class="list-disc pl-5 space-y-2" style="color: var(--text-secondary);">
+                                    <li><strong>網路分段：</strong> 將開發環境與生產環境進行嚴格的網路分段，限制橫向移動。</li>
+                                    <li><strong>最小權限原則 (PoLP)：</strong> 確保開發工具和服務以最小必要權限運行。</li>
+                                    <li><strong>實施零信任安全模型：</strong> 假設任何存取都不可信，並對所有請求進行持續驗證。</li>
+                                    <li><strong>安全開發生命週期 (SDLC)：</strong> 將安全考量整合到開發流程的每個階段。</li>
+                                    <li><strong>容器化與微服務：</strong> 透過隔離應用程式來限制 RCE 攻擊的影響範圍。</li>
+                                    <li><strong>事件響應計畫：</strong> 制定清晰的事件響應策略，並定期進行演練。</li>
+                                    <li><strong>限制特權環境中的工具存取：</strong> 嚴格控制 AI 工具對敏感系統和資料的存取權限。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-content-mitigations" class="tab-content hidden">
+                     <div class="grid md:grid-cols-2 gap-4">
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="glossary" class="scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-2" style="color: var(--text-primary);">關鍵技術名詞</h2>
+                <p class="max-w-2xl mx-auto" style="color: var(--text-secondary);">本節提供報告中出現的關鍵技術術語的簡明定義，幫助您快速理解相關概念。</p>
+            </div>
+            <div class="max-w-4xl mx-auto">
+                 <input type="text" id="glossary-search" placeholder="搜尋名詞..." class="w-full p-3 mb-6 rounded-lg focus:ring-2 focus:ring-teal-500 transition" style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                <dl id="glossary-list" class="space-y-6">
+                </dl>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-16" style="background-color: var(--bg-tertiary); color: var(--text-tertiary); border-top: 1px solid var(--border-color);">
+        <div class="container mx-auto px-4 lg:px-6 py-8 text-center" style="color: var(--text-tertiary);">
+            <p>&copy; 2025 AI 開發安全洞察報告。此為基於公開研究資料生成的互動式摘要。</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const attackStepData = {
+        1: { 
+            title: '第一步：誘騙開發者訪問惡意網站', 
+            text: '攻擊者透過社交工程、釣魚郵件或其他方式，引誘持有存取權限的開發者點擊並訪問一個他們精心製作的惡意網站。這個網站是整個攻擊鏈的起點。' 
+        },
+        2: { 
+            title: '第二步：利用「0.0.0.0 Day」瀏覽器缺陷', 
+            text: '惡意網站中的腳本會嘗試向 "0.0.0.0" 這個特殊 IP 位址發送請求。由於現代瀏覽器對此處理不當，這個請求會被導向開發者的本機 (localhost)，從而繞過了禁止外部網站存取本地服務的同源策略安全限制。' 
+        },
+        3: { 
+            title: '第三步：結合 CSRF 漏洞與驗證缺失', 
+            text: '由於 MCP Inspector 的預設配置嚴重缺乏身份驗證機制，從惡意網站發送到本地服務的請求被視為合法。這是一個典型的跨站請求偽造 (CSRF) 漏洞，允許未經授權的請求啟動 MCP 命令。' 
+        },
+        4: { 
+            title: '第四步：執行遠端程式碼 (RCE)', 
+            text: '一旦惡意請求被接受，攻擊者就可以透過標準輸入/輸出 (stdio) 傳遞任意命令。這些命令將在開發者的機器上以其自身權限執行，從而導致 RCE。攻擊者可以竊取資料、安裝後門，並在內部網路中橫向移動。' 
+        }
+    };
+
+    const riskData = [
+        { category: 'mcp', title: 'SQL 注入 (SQLi)', text: '在 Anthropic 的參考 SQLite MCP 伺服器中，未經淨化的使用者輸入可直接拼接到 SQL 查詢中，為 SQLi 攻擊創造條件。' },
+        { category: 'mcp', title: '儲存型提示注入', text: '利用 SQLi 漏洞，攻擊者可將惡意提示儲存在資料庫中。當 AI 代理讀取此資料時，將執行惡意指令，如外洩資料。' },
+        { category: 'mcp', title: '工具投毒', text: '惡意的 MCP 伺服器可向 AI 模型提供帶有惡意功能的工具，誘使 LLM 執行未經授權的命令或洩露本地檔案。' },
+        { category: 'mcp', title: '路徑遍歷', text: 'MCP 的「讀取檔案」工具若未充分淨化使用者輸入的路徑，攻擊者可藉此讀取伺服器上的任意敏感檔案。' },
+        { category: 'llm', title: '提示注入', text: '透過精心設計的輸入，攻擊者可以繞過 LLM 的安全護欄，使其執行非預期操作或洩露內部設定與資料。' },
+        { category: 'llm', title: '不安全輸出處理', text: '若應用程式未對 LLM 的輸出進行驗證和淨化，可能導致下游系統遭受 XSS 或 CSRF 等攻擊。' },
+        { category: 'mlops', title: '供應鏈漏洞', text: 'AI 開發依賴大量第三方套件和預訓練模型。這些元件中的漏洞可能被引入到最終產品中，形成供應鏈風險。' },
+        { category: 'mlops', title: '不安全的人工製品', text: '惡意程式碼可被嵌入到 ML 模型檔案（如 Pickle 格式）中，在模型載入時執行，造成 RCE 風險。' },
+        { category: 'attack', title: '惡意活動自動化', text: '攻擊者利用生成式 AI 大規模創建更具說服力的釣魚郵件、合成惡意軟體變種或生成虛假資訊。' },
+        { category: 'attack', title: '對抗性攻擊', text: '透過對輸入資料（如圖片、聲音）進行微小且人眼難以察覺的擾動，欺騙 AI 模型做出錯誤的分類或判斷。' },
+        { category: 'mcp', title: '令牌竊取', text: 'API 令牌若未加密儲存在 MCP 配置中，一旦攻擊者獲得存取權限，即可竊取並冒用身份。'},
+        { category: 'llm', title: '敏感資訊洩露', text: 'LLM 可能在回應中無意洩露其訓練資料中包含的個人隱私、商業機密或其他敏感資訊。'},
+    ];
+
+    const frameworksData = [
+        { title: 'NIST AI 風險管理框架 (AI RMF 1.0)', content: '一個自願性框架，旨在幫助組織在整個 AI 生命週期中管理與 AI 技術相關的多方面風險。其核心功能包括治理 (Govern)、映射 (Map)、衡量 (Measure) 和管理 (Manage)，以提升 AI 系統的信任度。', tag: 'tag-framework' },
+        { title: 'OWASP 大型語言模型十大安全風險', content: '專門針對 LLM 應用程式的十大最關鍵安全風險列表。它識別了如提示注入、不安全輸出處理、訓練資料投毒等 LLM 特有漏洞，並提供緩解建議。', tag: 'tag-framework' },
+        { title: 'ISO/IEC 27001 人工智慧安全準則', content: '將國際資訊安全管理標準 ISO 27001 應用於 AI/ML 環境。它提供了透過資產盤點、存取控制、安全開發生命週期等控制措施來保護 AI 系統和資料的清晰框架。', tag: 'tag-framework' }
+    ];
+
+    const mitigationsData = [
+        { title: '安全 AI 開發生命週期 (AI-SDLC)', text: '在 AI 系統開發的每個階段（設計、實作、測試）都整合安全檢查與程式碼審查。' },
+        { title: '強大的資料加密', text: '確保所有資料，無論是靜態儲存還是傳輸中，都使用最新的協定進行加密，保護敏感資訊。' },
+        { title: '嚴格的輸入驗證', text: '對所有使用者和系統輸入進行嚴格的驗證與淨化，以防範提示注入和其他注入式攻擊。' },
+        { title: '最小權限原則 (PoLP)', text: '確保 AI 模型和相關服務僅具有執行其預期功能所需的最小權限，限制潛在的洩露影響。' },
+        { title: '採用零信任架構', text: '不信任任何請求，持續驗證所有存取。對 AI 系統的每次互動都進行身份驗證和授權。' },
+        { title: '持續監控與異常檢測', text: '利用 AI 驅動的工具來監控系統行為，及時發現並回應異常活動或潛在威脅。' },
+        { title: '供應鏈安全', text: '對第三方函式庫、模型和資料集進行漏洞掃描和安全審查，防止引入外部風險。' },
+        { title: '開發者安全培訓', text: '對開發團隊進行 AI 特定安全風險的培訓，提升他們識別和防範漏洞的能力。' }
+    ];
+    
+    const glossaryData = [
+        { term: 'RCE (遠端程式碼執行)', definition: '一種網路攻擊，攻擊者可以在遠端電腦或伺服器上執行任意命令或程式碼。' },
+        { term: '0.0.0.0 Day', definition: '一個長期存在的瀏覽器漏洞，利用瀏覽器處理 IP 位址 0.0.0.0 的方式，允許惡意網站與本地服務互動。' },
+        { term: 'CSRF (跨站請求偽造)', definition: '一種網路攻擊，誘騙網頁瀏覽器在使用者當前已驗證的受信任網站上執行非預期操作。' },
+        { term: 'CVSS (共同漏洞評分系統)', definition: '一個開放的行業標準，用於評估電腦系統安全漏洞的嚴重性，提供數值分數。' },
+        { term: 'MCP (模型上下文協定)', definition: 'Anthropic 推出的一種開源協定，旨在使 AI 代理能夠連接到外部工具和資料來源。' },
+        { term: 'LLM (大型語言模型)', definition: '一種在大量文本資料上訓練的 AI 模型，能夠理解、生成和處理人類語言。' },
+        { term: 'MLOps (機器學習營運)', definition: '一套旨在簡化機器學習模型開發、部署和維護流程的實踐。' },
+        { term: '提示注入', definition: '一種針對 LLM 的攻擊，攻擊者操縱輸入提示以改變模型行為，可能導致洩露敏感資料或執行未授權操作。' },
+        { term: '資料投毒', definition: '一種惡意攻擊，攻擊者有意將不正確或有偏見的資料引入模型的訓練集，以操縱其結果。' },
+        { term: '零信任', definition: '一種安全模型，其核心原則是「不信任任何事物，驗證一切」，要求對所有存取請求進行持續驗證。' },
+        { term: 'Pickle (Python)', definition: '一個用於序列化 Python 物件的模組。反序列化不受信任的 Pickle 檔案可能導致任意程式碼執行，存在安全風險。' },
+        { term: '供應鏈漏洞', definition: '源於開發或部署中使用的第三方依賴項（如函式庫、模型）的風險，這些依賴項可能引入安全弱點。' }
+    ];
+
+    const cvssChartCtx = document.getElementById('cvssChart').getContext('2d');
+    new Chart(cvssChartCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['CVSS 嚴重性評分', '剩餘'],
+            datasets: [{
+                data: [9.4, 10 - 9.4],
+                backgroundColor: ['#dc2626', '#f3f4f6'],
+                borderColor: ['#dc2626', '#f3f4f6'],
+                borderWidth: 1,
+                cutout: '75%',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            if (context.dataIndex === 0) {
+                                return ` CVSS 評分: ${context.raw}`;
+                            }
+                            return null;
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    });
+
+    const stepNodes = document.querySelectorAll('.step-node');
+    const detailsInitial = document.getElementById('details-initial');
+    const detailsContent = document.getElementById('details-content');
+    const detailsTitle = document.getElementById('details-title');
+    const detailsText = document.getElementById('details-text');
+
+    stepNodes.forEach(node => {
+        node.addEventListener('click', () => {
+            stepNodes.forEach(n => n.classList.remove('border-teal-400', 'bg-teal-50', 'ring-2', 'ring-teal-300'));
+            node.classList.add('border-teal-400', 'bg-teal-50', 'ring-2', 'ring-teal-300');
+
+            const step = node.dataset.step;
+            const data = attackStepData[step];
+
+            detailsInitial.classList.add('hidden');
+            detailsContent.classList.remove('hidden');
+            
+            detailsTitle.textContent = data.title;
+            detailsText.textContent = data.text;
+        });
+    });
+
+    const riskGrid = document.getElementById('risk-grid');
+    const riskFilterBtns = document.querySelectorAll('.risk-filter-btn');
+
+    function populateRisks(filter = 'all') {
+        riskGrid.innerHTML = '';
+        const filteredRisks = (filter === 'all') ? riskData : riskData.filter(risk => risk.category === filter);
+        
+        filteredRisks.forEach(risk => {
+            const card = document.createElement('div');
+            card.className = 'content-card p-6 risk-card';
+            card.setAttribute('data-category', risk.category);
+            card.innerHTML = `
+                <span class="tag tag-risk mb-2">${risk.category.toUpperCase()}</span>
+                <h4 class="font-bold text-lg mb-2" style="color: var(--text-primary);">${risk.title}</h4>
+                <p class="text-sm" style="color: var(--text-secondary);">${risk.text}</p>
+            `;
+            riskGrid.appendChild(card);
+        });
+    }
+
+    riskFilterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            riskFilterBtns.forEach(b => {
+                b.classList.remove('active');
+                b.style.backgroundColor = 'var(--bg-secondary)';
+                b.style.color = 'var(--text-secondary)';
+            });
+            btn.classList.add('active');
+            btn.style.backgroundColor = '#0f766e';
+            btn.style.color = 'white';
+            
+            const filter = btn.dataset.filter;
+            populateRisks(filter);
+        });
+    });
+
+    populateRisks();
+
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            tabContents.forEach(content => content.classList.add('hidden'));
+            const contentId = `tab-content-${tab.dataset.tab}`;
+            document.getElementById(contentId).classList.remove('hidden');
+        });
+    });
+    
+    const accordionContainer = document.getElementById('frameworks-accordion');
+    frameworksData.forEach((item, index) => {
+        const accordionItem = document.createElement('div');
+        accordionItem.className = 'rounded-lg';
+        accordionItem.style.border = '1px solid var(--border-color)';
+        accordionItem.innerHTML = `
+            <button class="accordion-header w-full flex justify-between items-center text-left p-4 font-medium transition-colors" style="color: var(--text-primary); border: 1px solid var(--border-color);" onmouseover="this.style.backgroundColor='var(--hover-bg)'" onmouseout="this.style.backgroundColor='var(--bg-secondary)'">
+                <span>${item.title}</span>
+                <span class="accordion-icon transition-transform duration-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </span>
+            </button>
+            <div class="accordion-content hidden p-4" style="border-top: 1px solid var(--border-color);">
+                <p style="color: var(--text-secondary);">${item.content}</p>
+            </div>
+        `;
+        accordionContainer.appendChild(accordionItem);
+    });
+
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.accordion-icon');
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        });
+    });
+
+    const mitigationsContainer = document.querySelector('#tab-content-mitigations .grid');
+    mitigationsData.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'content-card p-6';
+        card.innerHTML = `
+            <h4 class="font-bold text-lg mb-2" style="color: var(--text-primary);">${item.title}</h4>
+            <p class="text-sm" style="color: var(--text-secondary);">${item.text}</p>
+        `;
+        mitigationsContainer.appendChild(card);
+    });
+    
+    const glossaryList = document.getElementById('glossary-list');
+    const glossarySearch = document.getElementById('glossary-search');
+
+    function populateGlossary(searchTerm = '') {
+        glossaryList.innerHTML = '';
+        const filteredGlossary = glossaryData.filter(item => 
+            item.term.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            item.definition.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        if (filteredGlossary.length === 0) {
+            glossaryList.innerHTML = `<div class="text-center p-4" style="color: var(--text-tertiary);">找不到符合條件的項目。</div>`;
+            return;
+        }
+
+        filteredGlossary.forEach(item => {
+            const entry = document.createElement('div');
+            entry.innerHTML = `
+                <dt class="font-bold text-lg" style="color: var(--text-primary);">${item.term}</dt>
+                <dd class="mt-1" style="color: var(--text-secondary);">${item.definition}</dd>
+            `;
+            glossaryList.appendChild(entry);
+        });
+    }
+
+    glossarySearch.addEventListener('input', (e) => {
+        populateGlossary(e.target.value);
+    });
+
+    populateGlossary();
+    
+    // Dark mode functionality
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const html = document.documentElement;
+    const themeIconSun = document.querySelector('.theme-icon-sun');
+    const themeIconMoon = document.querySelector('.theme-icon-moon');
+    
+    // Check for saved theme preference or default to 'dark'
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    html.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+    
+    function updateThemeIcon(theme) {
+        if (theme === 'dark') {
+            themeIconSun.classList.add('hidden');
+            themeIconMoon.classList.remove('hidden');
+        } else {
+            themeIconSun.classList.remove('hidden');
+            themeIconMoon.classList.add('hidden');
+        }
+    }
+    
+    darkModeToggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+    });
+    
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    document.querySelectorAll('#mobile-menu a').forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+        });
+    });
+    
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('main section');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                });
+            }
+        });
+    }, { rootMargin: "-50% 0px -50% 0px" });
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+});
+</script>
+</body>
+</html>

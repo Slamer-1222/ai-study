@@ -1,0 +1,1162 @@
+<html lang="zh-Hant"><head><script>(function(firebaseConfig, initialAuthToken, appId) {
+        window.__firebase_config = firebaseConfig;
+        window.__initial_auth_token = initialAuthToken;
+        window.__app_id = appId;
+            })("\n{\n  \"apiKey\": \"AIzaSyCqyCcs2R2e7AegGjvFAwG98wlamtbHvZY\",\n  \"authDomain\": \"bard-frontend.firebaseapp.com\",\n  \"projectId\": \"bard-frontend\",\n  \"storageBucket\": \"bard-frontend.firebasestorage.app\",\n  \"messagingSenderId\": \"175205271074\",\n  \"appId\": \"1:175205271074:web:2b7bd4d34d33bf38e6ec7b\"\n}\n","eyJhbGciOiJSUzI1NiIsImtpZCI6IjM3MTE1MjViZGZmNmM4YmM2NjM2NDE3ZjgwOGMzYzFlYTkyN2E0YmMiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BiYXJkLWZyb250ZW5kLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoiaHR0cHM6XC9cL2lkZW50aXR5dG9vbGtpdC5nb29nbGVhcGlzLmNvbVwvZ29vZ2xlLmlkZW50aXR5LmlkZW50aXR5dG9vbGtpdC52MS5JZGVudGl0eVRvb2xraXQiLCJ1aWQiOiIxNDY3NTg0NjYwOTE4MTM0OTI2OSIsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLWZic3ZjQGJhcmQtZnJvbnRlbmQuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGFpbXMiOnsiYXBwSWQiOiJjXzIwMTA5NWI5MGRjOTY2ZDVfQ3liZXJzZWN1cml0eV9TZXJ2aWNlX0ludGVyYWN0aXZlX0JyaWVmaW5nX1RXLTQ5In0sImV4cCI6MTc1MjAyOTgxNCwiaWF0IjoxNzUyMDI2MjE0LCJhbGciOiJSUzI1NiJ9.yeU2reb_dcbvFAsEbFKWPvTymjRUNFNt3dA_h5VnBuqa22KjM-Lu_TdOm23BfXVAwQU7W4mGAVo6GfFnedWBqUo5As3JcUeVXm8VF3_p2UHF24NIGyShh_yv-AI6ED_iuUyMq7w6KcIY2sHcc5fOsYxCedeY_n3e5PT6yvZyNvSk7Zhlw7Whi5CS6eb8oGqBeLHVc2s0bi_VVJruTRZ_LMXftmo3DXWpKvCMiWUETAlbmLJsu1SAD2N4WgpApgmRR5MDQjQ29Mz49UhQaSknJB7TZqTUYCPn9oiIMGNmSFX2bGDyvRoFG--fXkEHj64pmn0Aiyr6oOuzhtIv-3XCbQ","c_201095b90dc966d5_Cybersecurity_Service_Interactive_Briefing_TW-49")</script><script>(function() {
+  // Ensure this script is executed only once
+  if (window.firebaseAuthBridgeScriptLoaded) {
+    return;
+  }
+  window.firebaseAuthBridgeScriptLoaded = true;
+
+  let nextTokenPromiseId = 0;
+
+  // Stores { resolve, reject } for ongoing token requests
+  const pendingTokenPromises = {};
+
+  // Listen for messages from the Host Application
+  window.addEventListener('message', function(event) {
+
+    const messageData = event.data;
+
+  if (messageData && messageData.type === 'RESOLVE_NEW_FIREBASE_TOKEN') {
+      const { success, token, error, promiseId } = messageData ?? {};
+      if (pendingTokenPromises[promiseId]) {
+        if (success) {
+          pendingTokenPromises[promiseId].resolve(token);
+        } else {
+          pendingTokenPromises[promiseId].reject(new Error(error || 'Token refresh failed from host.'));
+        }
+        delete pendingTokenPromises[promiseId];
+      }
+    }
+  });
+
+  // Expose a function for the Generated App to request a new Firebase token
+  window.requestNewFirebaseToken = function() {
+    const currentPromiseId = nextTokenPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingTokenPromises[currentPromiseId] = { resolve, reject };
+    });
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'REQUEST_NEW_FIREBASE_TOKEN',
+        promiseId: currentPromiseId
+      }, '*');
+    } else {
+      pendingTokenPromises[currentPromiseId].reject(new Error('No parent window to request token from.'));
+      delete pendingTokenPromises[currentPromiseId];
+    }
+    return promise;
+  };
+})();</script><script>
+let realOriginalGetUserMedia = null;
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  realOriginalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+}
+
+(function() {
+  if (navigator.mediaDevices && navigator.mediaDevices.__proto__) {
+    try {
+      Object.defineProperty(navigator.mediaDevices.__proto__, 'getUserMedia', {
+        get: function() {
+          return undefined; // Or throw an error
+        },
+        configurable: false
+      });
+    } catch (error) {
+      console.error("Error defining prototype getter:", error);
+    }
+  }
+})();
+
+(function() {
+  const pendingMediaResolvers = {};
+  let nextMediaPromiseId = 0;
+
+  function requestMediaPermissions(constraints) {
+    const mediaPromiseId = nextMediaPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingMediaResolvers[mediaPromiseId] = (granted) => {
+        delete pendingMediaResolvers[mediaPromiseId];
+        resolve(granted);
+      };
+    });
+
+    window.parent.postMessage({
+      type: 'requestMediaPermission',
+      constraints: constraints,
+      promiseId: mediaPromiseId,
+    }, '*');
+
+    return promise;
+  }
+
+  let originalGetUserMedia = realOriginalGetUserMedia;
+
+  function interceptGetUserMedia() {
+    if (navigator.mediaDevices) {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        value: function(constraints) {
+          return requestMediaPermissions(constraints).then((granted) => {
+            if (granted) {
+              if (originalGetUserMedia) {
+                return originalGetUserMedia(constraints);
+              } else {
+                throw new Error("Original getUserMedia not available.");
+              }
+            } else {
+              throw new DOMException('Permission denied', 'NotAllowedError');
+            }
+          });
+        },
+        writable: false,
+        configurable: false
+      });
+    }
+  }
+
+  interceptGetUserMedia();
+
+  const observer = new MutationObserver(function(mutationsList, observer) {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'reconfigured' && mutation.name === 'getUserMedia' && mutation.object === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'attributes' && mutation.attributeName === 'getUserMedia' && mutation.target === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'childList' && mutation.addedNodes) {
+        mutation.addedNodes.forEach(node => {
+          if (node === navigator.mediaDevices) {
+            interceptGetUserMedia();
+          }
+        });
+      }
+    }
+  });
+
+  function interceptSpeechRecognition() {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      return;
+    }
+
+    const OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const SpeechRecognitionWrapper = function(...args) {
+      const recognizer = new OriginalSpeechRecognition(...args);
+      const originalStart = recognizer.start.bind(recognizer);
+
+      recognizer.start = function() {
+        requestMediaPermissions({ audio: true }).then(granted => {
+          if (granted) {
+            originalStart();
+          } else {
+            const errorEvent = new SpeechRecognitionErrorEvent('error');
+            errorEvent.error = 'not-allowed'; // This is the standard error for permission denial.
+            recognizer.dispatchEvent(errorEvent);
+          }
+        });
+      };
+
+      return recognizer;
+    };
+
+    SpeechRecognitionWrapper.prototype = OriginalSpeechRecognition.prototype;
+    SpeechRecognitionWrapper.prototype.constructor = SpeechRecognitionWrapper;
+
+    if (window.SpeechRecognition) {
+      window.SpeechRecognition = SpeechRecognitionWrapper;
+    }
+    if (window.webkitSpeechRecognition) {
+      window.webkitSpeechRecognition = SpeechRecognitionWrapper;
+    }
+  }
+
+  interceptSpeechRecognition();
+
+  window.addEventListener('message', function(event) {
+    if (event.data) {
+      if (event.data.type === 'resolveMediaPermission') {
+        const { promiseId, granted } = event.data;
+        if (pendingMediaResolvers[promiseId]) {
+          pendingMediaResolvers[promiseId](granted);
+        }
+      }
+    }
+  });
+
+})();</script><script>((function(modelInformation) {
+  const originalFetch = window.fetch;
+  // TODO: b/421908508 - Move these out of the script and match all generative AI model calls.
+  let googleLlmBaseApiUrls = [
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':streamGenerateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageEditModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predictLongRunning',
+  ];
+  modelInformation.deprecatedTextModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+    );
+  });
+
+  const pendingFetchResolvers = {};
+  let nextPromiseId = 0;
+
+  function handleStringInput(input, optionsArgument) {
+    const actualUrl = input;
+    const fetchCallArgs = [actualUrl, optionsArgument];
+    const effectiveOptions = optionsArgument || {};
+    const bodyForApiKeyCheck = effectiveOptions.body;
+    const bodyForPostMessage = effectiveOptions.body;
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  function handleRequestInput(input, optionsArgument) {
+    const actualUrl = input.url;
+    const fetchCallArgs = [input, optionsArgument];
+    const effectiveOptions = { method: input.method, headers: new Headers(input.headers) };
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (optionsArgument) {
+      if (optionsArgument.method) effectiveOptions.method = optionsArgument.method;
+      if (optionsArgument.headers) effectiveOptions.headers = new Headers(optionsArgument.headers);
+      if ('body' in optionsArgument) {
+        bodyForApiKeyCheck = optionsArgument.body;
+        bodyForPostMessage = optionsArgument.body;
+      } else {
+        bodyForApiKeyCheck = undefined;
+        bodyForPostMessage = input.body;
+      }
+    } else {
+      bodyForApiKeyCheck = undefined;
+      bodyForPostMessage = input.body;
+    }
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  window.fetch = function(input, optionsArgument) {
+    let actualUrl;
+    let fetchCallArgs;
+    let effectiveOptions = {};
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (typeof input === 'string') {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleStringInput(input, optionsArgument));
+    } else if (input instanceof Request) {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleRequestInput(input, optionsArgument));
+    } else {
+      return originalFetch.apply(window, [input, optionsArgument]);
+    }
+
+    effectiveOptions.method = effectiveOptions.method || 'GET';
+    if (!effectiveOptions.headers) {
+      effectiveOptions.headers = new Headers();
+    }
+
+
+    if (typeof actualUrl === 'string' && googleLlmBaseApiUrls.some((url) => actualUrl.startsWith(url))) {
+      let apiKeyIsNull = true;
+
+      const regex = new RegExp("models/([^:]+)");
+      const modelNameMatch = actualUrl.match(regex);
+      const modelName = modelNameMatch ? modelNameMatch[1] : 'unspecified';
+
+
+      try {
+        const urlObject = new URL(actualUrl);  // Use URL object for robust parsing
+        const apiKeyParam = urlObject.searchParams.get('key');
+        if (apiKeyParam) {
+          apiKeyIsNull = false;
+        }
+      } catch (e) {
+        // Continue checks even if URL parsing fails
+      }
+
+      if (apiKeyIsNull && effectiveOptions.headers) {
+        const h = new Headers(effectiveOptions.headers);
+        const apiKeyHeaderValue = h.get('X-API-Key') || h.get('x-api-key');
+        if (apiKeyHeaderValue) {
+          apiKeyIsNull = false;
+          return originalFetch.apply(window, fetchCallArgs);
+        }
+      }
+
+      if (apiKeyIsNull && effectiveOptions.method && ['POST', 'PUT', 'PATCH'].includes(effectiveOptions.method.toUpperCase()) && typeof bodyForApiKeyCheck === 'string') {
+        try {
+          const bodyData = JSON.parse(bodyForApiKeyCheck);
+          if (bodyData && bodyData.apiKey) {
+            apiKeyIsNull = false;
+            return originalFetch.apply(window, fetchCallArgs);
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      if(apiKeyIsNull) {
+        const promiseId = nextPromiseId++;
+        const promise = new Promise((resolve) => {
+          pendingFetchResolvers[promiseId] = (resolvedResponse) => {
+            delete pendingFetchResolvers[promiseId];
+            resolve(resolvedResponse);
+          };
+        });
+
+        let serializedBodyForPostMessage;
+        if (typeof bodyForPostMessage === 'string' || bodyForPostMessage == null) {
+            serializedBodyForPostMessage = bodyForPostMessage;
+        } else if (bodyForPostMessage instanceof ReadableStream) {
+            serializedBodyForPostMessage = null;
+        } else {
+            try {
+                serializedBodyForPostMessage = JSON.stringify(bodyForPostMessage);
+            } catch (e) {
+                serializedBodyForPostMessage = null;
+            }
+        }
+
+        const messageOptions = {
+            method: effectiveOptions.method,
+            headers: Object.fromEntries(new Headers(effectiveOptions.headers).entries()),
+            body: serializedBodyForPostMessage
+        };
+
+        window.parent.postMessage({
+          type: 'requestFetch',
+          url: actualUrl,
+          modelName: modelName,
+          options: messageOptions,
+          promiseId: promiseId,
+        }, '*');
+
+        return promise;
+      }
+      return originalFetch.apply(window, fetchCallArgs);
+    }
+    return originalFetch.apply(window, fetchCallArgs);
+  };
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resolveFetch') {
+      const { promiseId, response } = event.data;
+      if (pendingFetchResolvers[promiseId]) {
+        try {
+          const reconstructedResponse = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers),
+          });
+          pendingFetchResolvers[promiseId](reconstructedResponse);
+        } catch (error) {
+          pendingFetchResolvers[promiseId](new Response(null, { status: 500, statusText: "Interceptor Response Reconstruction Error" }));
+        }
+      }
+    }
+  });
+
+}))({"textModelName":"gemini-2.5-flash-preview-04-17","imageModelName":"imagen-3.0-generate-002","imageEditModelName":"gemini-2.0-flash-preview-image-generation","videoModelName":"veo-2.0-generate-001","deprecatedTextModelNames":["gemini-2.0-flash"]})</script><script>(function() {
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+
+    /**
+   * Normalizes an error event or a promise rejection reason into a structured error object.
+   * @param {*} errorEventOrReason The error object or reason.
+   * @return {object} Structured error data { message, name, stack }.
+   */
+  function getErrorObject(errorEventOrReason) {
+    if (errorEventOrReason instanceof Error) {
+      return {
+        message: errorEventOrReason.message,
+        name: errorEventOrReason.name,
+        stack: errorEventOrReason.stack,
+      };
+    }
+    // Fallback for non-Error objects.
+    try {
+      return {
+        message: JSON.stringify(errorEventOrReason),
+        name: 'UnknownErrorType',
+        stack: null,
+      };
+    } catch (e) {
+      return {
+        message: String(errorEventOrReason),
+        name: 'UnknownErrorTypeNonStringifiable',
+        stack: null,
+      };
+    }
+  }
+
+  /**
+   * Converts an array of arguments (from log/error) into a single string.
+   * Handles Error objects specially to include their message and stack.
+   * @param {Array<*>} args - Arguments passed to console methods.
+   * @return {string} A string representation of the arguments.
+   */
+  function stringifyArgs(args) {
+    return args
+      .map((arg) => {
+        if (arg instanceof Error) {
+          const {message, stack} = arg;
+          return `Error: ${message}${stack ? ('\nStack: ' + stack) : ''}`;
+        }
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg);
+          } catch (error) {
+            return '[Circular Object]';
+          }
+        } else {
+          return String(arg);
+        }
+      })
+      .join(' ');
+  }
+
+  console.log = function(...args) {
+    const logString = stringifyArgs(args);
+    window.parent.postMessage({ type: 'log', message: logString }, '*');
+    originalConsoleLog.apply(console, args);
+  };
+
+  console.error = function(...args) {
+    let errorData;
+    if (args.length > 0 && args[0] instanceof Error) {
+      const err = args[0];
+      // If the first arg is an Error, capture its details.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        ...getErrorObject(err),
+        rawArgsString: stringifyArgs(args.slice(1)),
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      // If not an Error object, treat all args as a general error message.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        message: stringifyArgs(args),
+        name: 'ConsoleLoggedError',
+        stack: null,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    window.parent.postMessage(errorData, '*');
+    originalConsoleError.apply(console, args);
+  };
+
+  // Listen for global unhandled synchronous errors.
+  window.addEventListener('error', function(event) {
+    const errorDetails = event.error ? getErrorObject(event.error) : {
+      message: event.message,
+      name: 'GlobalError',
+      stack: null,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    };
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'global',
+      ...errorDetails,
+      message: errorDetails.message || event.message,
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+  // Listen for unhandled promise rejections (asynchronous errors).
+  window.addEventListener('unhandledrejection', function(event) {
+    const errorDetails = getErrorObject(event.reason);
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'unhandledrejection',
+      ...errorDetails,
+      message: errorDetails.message || 'Unhandled Promise Rejection',
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+})();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式資安檢測服務介紹</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .main-tab-btn.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        .service-content {
+            display: none;
+        }
+        .service-content.active {
+            display: block;
+        }
+        .sub-tab-btn {
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .sub-tab-btn.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 700;
+        }
+        .sub-tab-content {
+            display: none;
+        }
+        .sub-tab-content.active {
+            display: block;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.16 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width: 640px){.container{max-width:640px}}@media (min-width: 768px){.container{max-width:768px}}@media (min-width: 1024px){.container{max-width:1024px}}@media (min-width: 1280px){.container{max-width:1280px}}@media (min-width: 1536px){.container{max-width:1536px}}.absolute{position:absolute}.relative{position:relative}.right-0{right:0px}.top-0{top:0px}.mx-auto{margin-left:auto;margin-right:auto}.my-8{margin-top:2rem;margin-bottom:2rem}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mr-0{margin-right:0px}.mr-2{margin-right:0.5rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-4{margin-top:1rem}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-12{height:3rem}.h-32{height:8rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-full{height:100%}.w-10{width:2.5rem}.w-12{width:3rem}.w-32{width:8rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-full{width:100%}.flex-1{flex:1 1 0%}.flex-shrink-0{flex-shrink:0}.list-inside{list-style-position:inside}.list-disc{list-style-type:disc}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.items-stretch{align-items:stretch}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.gap-x-4{column-gap:1rem}.space-x-4 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(1rem * var(--tw-space-x-reverse));margin-left:calc(1rem * calc(1 - var(--tw-space-x-reverse)))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-b-lg{border-bottom-right-radius:0.5rem;border-bottom-left-radius:0.5rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-l{border-left-width:1px}.border-r{border-right-width:1px}.border-blue-200{--tw-border-opacity:1;border-color:rgb(191 219 254 / var(--tw-border-opacity, 1))}.border-gray-200{--tw-border-opacity:1;border-color:rgb(229 231 235 / var(--tw-border-opacity, 1))}.border-green-200{--tw-border-opacity:1;border-color:rgb(187 247 208 / var(--tw-border-opacity, 1))}.bg-blue-50{--tw-bg-opacity:1;background-color:rgb(239 246 255 / var(--tw-bg-opacity, 1))}.bg-gray-100{--tw-bg-opacity:1;background-color:rgb(243 244 246 / var(--tw-bg-opacity, 1))}.bg-gray-200{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.bg-gray-50{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.bg-green-50{--tw-bg-opacity:1;background-color:rgb(240 253 244 / var(--tw-bg-opacity, 1))}.bg-indigo-50{--tw-bg-opacity:1;background-color:rgb(238 242 255 / var(--tw-bg-opacity, 1))}.bg-purple-50{--tw-bg-opacity:1;background-color:rgb(250 245 255 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.p-1{padding:0.25rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.px-1{padding-left:0.25rem;padding-right:0.25rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pb-2{padding-bottom:0.5rem}.pl-7{padding-left:1.75rem}.pl-8{padding-left:2rem}.text-left{text-align:left}.text-center{text-align:center}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.text-blue-500{--tw-text-opacity:1;color:rgb(59 130 246 / var(--tw-text-opacity, 1))}.text-blue-600{--tw-text-opacity:1;color:rgb(37 99 235 / var(--tw-text-opacity, 1))}.text-blue-700{--tw-text-opacity:1;color:rgb(29 78 216 / var(--tw-text-opacity, 1))}.text-blue-800{--tw-text-opacity:1;color:rgb(30 64 175 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.text-gray-700{--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.text-green-600{--tw-text-opacity:1;color:rgb(22 163 74 / var(--tw-text-opacity, 1))}.text-green-700{--tw-text-opacity:1;color:rgb(21 128 61 / var(--tw-text-opacity, 1))}.text-green-800{--tw-text-opacity:1;color:rgb(22 101 52 / var(--tw-text-opacity, 1))}.text-indigo-800{--tw-text-opacity:1;color:rgb(55 48 163 / var(--tw-text-opacity, 1))}.text-purple-500{--tw-text-opacity:1;color:rgb(168 85 247 / var(--tw-text-opacity, 1))}.text-purple-700{--tw-text-opacity:1;color:rgb(126 34 206 / var(--tw-text-opacity, 1))}.text-purple-800{--tw-text-opacity:1;color:rgb(107 33 168 / var(--tw-text-opacity, 1))}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68 / var(--tw-text-opacity, 1))}.text-red-600{--tw-text-opacity:1;color:rgb(220 38 38 / var(--tw-text-opacity, 1))}.text-red-700{--tw-text-opacity:1;color:rgb(185 28 28 / var(--tw-text-opacity, 1))}.text-teal-400{--tw-text-opacity:1;color:rgb(45 212 191 / var(--tw-text-opacity, 1))}.text-teal-500{--tw-text-opacity:1;color:rgb(20 184 166 / var(--tw-text-opacity, 1))}.text-teal-700{--tw-text-opacity:1;color:rgb(15 118 110 / var(--tw-text-opacity, 1))}.text-yellow-600{--tw-text-opacity:1;color:rgb(202 138 4 / var(--tw-text-opacity, 1))}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.hover\:bg-gray-200:hover{--tw-bg-opacity:1;background-color:rgb(229 231 235 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-300:hover{--tw-bg-opacity:1;background-color:rgb(209 213 219 / var(--tw-bg-opacity, 1))}@media (min-width: 640px){.sm\:mr-2{margin-right:0.5rem}.sm\:inline{display:inline}.sm\:h-12{height:3rem}.sm\:h-8{height:2rem}.sm\:w-12{width:3rem}.sm\:w-8{width:2rem}.sm\:flex-row{flex-direction:row}.sm\:p-6{padding:1.5rem}.sm\:px-4{padding-left:1rem;padding-right:1rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}}@media (min-width: 768px){.md\:mb-12{margin-bottom:3rem}.md\:flex{display:flex}.md\:h-40{height:10rem}.md\:h-48{height:12rem}.md\:w-40{width:10rem}.md\:w-48{width:12rem}.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:gap-x-8{column-gap:2rem}.md\:p-8{padding:2rem}.md\:text-5xl{font-size:3rem;line-height:1}}</style></head>
+<body class="bg-gray-50">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        <header class="relative text-center mb-8 md:mb-12">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800">資安檢測服務介紹</h1>
+            <p class="text-lg text-gray-600 mt-2">為您的企業資產提供最專業的保護</p>
+            <button id="save-page-btn" class="absolute top-0 right-0 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 sm:px-4 rounded-lg inline-flex items-center transition text-sm" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="download" class="lucide lucide-download w-4 h-4 mr-0 sm:mr-2"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>
+                <span class="hidden sm:inline">另存離線網頁</span>
+            </button>
+        </header>
+
+        <!-- Service Navigation Tabs -->
+        <div class="mb-8 flex flex-col sm:flex-row justify-center rounded-lg p-1 bg-gray-200 shadow-inner">
+            <button class="main-tab-btn flex-1 px-3 sm:px-4 py-3 font-bold text-gray-600 rounded-md transition-all duration-300 text-sm sm:text-base" onclick="showService('service-intro')">
+                <span class="hidden sm:inline text-lg">⓪ </span>為何需要
+            </button>
+            <button class="main-tab-btn flex-1 px-3 sm:px-4 py-3 font-bold text-gray-600 rounded-md transition-all duration-300 text-sm sm:text-base" onclick="showService('service-va')">
+                <span class="hidden sm:inline text-lg">① </span>系統弱掃
+            </button>
+            <button class="main-tab-btn flex-1 px-3 sm:px-4 py-3 font-bold text-gray-600 rounded-md transition-all duration-300 text-sm sm:text-base" onclick="showService('service-web-va')">
+                <span class="hidden sm:inline text-lg">② </span>網站弱掃
+            </button>
+            <button class="main-tab-btn flex-1 px-3 sm:px-4 py-3 font-bold text-gray-600 rounded-md transition-all duration-300 text-sm sm:text-base" onclick="showService('service-pt')">
+                <span class="hidden sm:inline text-lg">③ </span>滲透測試
+            </button>
+            <button class="main-tab-btn flex-1 px-3 sm:px-4 py-3 font-bold text-gray-600 rounded-md transition-all duration-300 text-sm sm:text-base active" onclick="showService('service-qa')">
+                <span class="hidden sm:inline text-lg">④ </span>常見問答
+            </button>
+        </div>
+
+        <main>
+            <!-- Introduction Content -->
+            <div id="service-intro" class="service-content">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">為何您的企業需要資安檢測服務？</h2>
+                    <p class="text-md text-gray-600 mt-1">在數位時代，主動防禦是保護企業價值的最佳策略</p>
+                </div>
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="flex justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shield-check" class="lucide lucide-shield-check w-32 h-32 md:w-48 md:h-48 text-blue-500"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">看不見的風險，是最大的風險</h3>
+                            <p class="text-gray-700 mb-6">
+                                您的網站、伺服器與應用程式，如同您在網路世界的數位資產。然而，隨著網路攻擊手法日新月異，許多潛在的安全性漏洞正曝露在風險之中。主動進行資安檢測，就像是為您的數位資產聘請專業的保全團隊，在駭客發現弱點前，先行加固防線。
+                            </p>
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="lock" class="lucide lucide-lock w-6 h-6 text-blue-600 flex-shrink-0 mt-1"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    <div>
+                                        <h4 class="font-bold text-blue-800">強化企業核心安全性</h4>
+                                        <p class="text-sm text-blue-700">主動發掘並修補漏洞，大幅降低資料外洩、服務中斷的風險。</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4 p-4 bg-green-50 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-check-2" class="lucide lucide-file-check-2 w-6 h-6 text-green-600 flex-shrink-0 mt-1"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="m3 15 2 2 4-4"></path></svg>
+                                    <div>
+                                        <h4 class="font-bold text-green-800">滿足法規與合規性要求</h4>
+                                        <p class="text-sm text-green-700">符合上市櫃法規、ISO 27001、PCI DSS等行業標準，避免罰款與行政處分。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-8 border-gray-200">
+
+                    <h3 class="text-xl font-bold text-center text-gray-800 mb-6">從被動應對到主動防禦的價值轉變</h3>
+                    <div class="grid grid-cols-2 md:flex md:flex-row items-stretch justify-center gap-4 text-center">
+                        <div class="p-4 bg-white rounded-lg shadow-md border border-gray-200 flex flex-col justify-center">
+                            <p class="text-3xl mb-2">🛡️</p>
+                            <h4 class="font-bold text-gray-700">主動檢測</h4>
+                            <p class="text-xs text-gray-500">發現未知弱點</p>
+                        </div>
+                        <div class="hidden md:flex text-2xl font-bold text-blue-500 items-center">→</div>
+                        <div class="p-4 bg-white rounded-lg shadow-md border border-gray-200 flex flex-col justify-center">
+                            <p class="text-3xl mb-2">📉</p>
+                            <h4 class="font-bold text-gray-700">降低風險</h4>
+                            <p class="text-xs text-gray-500">減少潛在損失</p>
+                        </div>
+                        <div class="hidden md:flex text-2xl font-bold text-blue-500 items-center">→</div>
+                        <div class="p-4 bg-white rounded-lg shadow-md border border-gray-200 flex flex-col justify-center">
+                            <p class="text-3xl mb-2">🤝</p>
+                            <h4 class="font-bold text-gray-700">建立信任</h4>
+                            <p class="text-xs text-gray-500">贏得客戶信賴</p>
+                        </div>
+                         <div class="hidden md:flex text-2xl font-bold text-blue-500 items-center">→</div>
+                        <div class="p-4 bg-white rounded-lg shadow-md border border-gray-200 flex flex-col justify-center">
+                            <p class="text-3xl mb-2">🏆</p>
+                            <h4 class="font-bold text-gray-700">提升價值</h4>
+                            <p class="text-xs text-gray-500">強化品牌商譽</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System VA Content with Sub-tabs -->
+            <div id="service-va" class="service-content">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-blue-700">系統弱點掃描</h2>
+                    <p class="text-md text-gray-600 mt-1">如同針對您企業主機與設備的「自動化健康檢查」</p>
+                </div>
+                
+                <div class="bg-white p-4 md:p-8 rounded-lg shadow-lg">
+                    <div class="mb-6 border-b border-gray-200 flex flex-wrap justify-center gap-x-4 md:gap-x-8">
+                        <button class="sub-tab-btn va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base active" onclick="showVaSubTab('va-desc')">服務說明</button>
+                        <button class="sub-tab-btn va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showVaSubTab('va-exec')">執行方式</button>
+                        <button class="sub-tab-btn va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showVaSubTab('va-info')">客戶需知</button>
+                        <button class="sub-tab-btn va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showVaSubTab('va-risk')">潛在風險</button>
+                        <button class="sub-tab-btn va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showVaSubTab('va-remediate')">修補建議</button>
+                    </div>
+
+                    <div id="va-desc" class="sub-tab-content va-sub-content p-4 active">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold mb-4 text-gray-800">1. 服務說明要項</h3>
+                                <ul class="space-y-4 text-gray-700">
+                                    <li><strong>核心目的：</strong>快速、大範圍地找出系統中「已知」的安全性弱點、漏洞或不安全的設定。</li>
+                                    <li><strong>主要價值：</strong>提供詳細的「健康報告」，協助風險識別、滿足法規遵循、並提升IT維運效率。</li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0 flex justify-center items-center w-32 h-32 md:w-40 md:h-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-search" class="lucide lucide-file-search w-full h-full text-blue-400"><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M4.268 21a2 2 0 0 0 1.727 1H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"></path><path d="m9 18-1.5-1.5"></path><circle cx="5" cy="14" r="3"></circle></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="va-exec" class="sub-tab-content va-sub-content p-4">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">2. 執行方式、架構與工具</h3>
+                        <div class="space-y-4 mb-8 text-center">
+                            <p><strong>執行方式：</strong>透過自動化掃描器執行非認證掃描(黑箱)。</p>
+                            <p><strong>使用工具：</strong>Tenable Nessus</p>
+                        </div>
+                        <hr class="my-8 border-gray-200">
+                        <h4 class="text-lg font-bold mb-6 text-gray-800 text-center">執行架構</h4>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="p-6 bg-blue-50 rounded-lg border border-blue-200">
+                                <h5 class="font-bold text-blue-800 mb-4 text-center">遠端掃描</h5>
+                                <div class="flex justify-center items-center space-x-4 text-blue-600 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="cloud" class="lucide lucide-cloud w-10 h-10 sm:w-12 sm:h-12"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shield" class="lucide lucide-shield w-10 h-10 sm:w-12 sm:h-12"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="server" class="lucide lucide-server w-10 h-10 sm:w-12 sm:h-12"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line></svg>
+                                </div>
+                                <p class="text-sm text-gray-700 text-center">透過安全的 VPN 通道，或由客戶端協助於內部建立 Nessus 虛擬化掃描器，由我方專家遠端連線進行掃描作業。</p>
+                            </div>
+                            <div class="p-6 bg-green-50 rounded-lg border border-green-200">
+                                <h5 class="font-bold text-green-800 mb-4 text-center">到場掃描</h5>
+                                <div class="flex justify-center items-center space-x-4 text-green-600 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="user-check" class="lucide lucide-user-check w-10 h-10 sm:w-12 sm:h-12"><path d="m16 11 2 2 4-4"></path><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="laptop" class="lucide lucide-laptop w-10 h-10 sm:w-12 sm:h-12"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"></path><path d="M20.054 15.987H3.946"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="server" class="lucide lucide-server w-10 h-10 sm:w-12 sm:h-12"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line></svg>
+                                </div>
+                                <p class="text-sm text-gray-700 text-center">我方專家將攜帶專用掃描設備，親赴客戶指定地點，在客戶內部網路環境中直接進行掃描作業。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="va-info" class="sub-tab-content va-sub-content p-4">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">3. 客戶需提供的資訊</h3>
+                        <div class="mb-8">
+                            <h4 class="text-lg font-bold mb-4 text-gray-700 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="list-checks" class="lucide lucide-list-checks w-6 h-6 mr-2 text-blue-500"><path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path><path d="M13 6h8"></path><path d="M13 12h8"></path><path d="M13 18h8"></path></svg>共通項目</h4>
+                            <ul class="space-y-4 text-gray-700 pl-8">
+                                <li><span class="font-bold text-green-700">【必要】</span>目標IP位址清單/網段。</li>
+                                <li><span class="font-bold text-green-700">【必要】</span>可執行掃描的離峰時間窗口。</li>
+                                <li><span class="font-bold text-green-700">【必要】</span>主要技術聯絡窗口。</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-4 text-gray-700 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="network" class="lucide lucide-network w-6 h-6 mr-2 text-blue-500"><rect x="16" y="16" width="6" height="6" rx="1"></rect><rect x="2" y="16" width="6" height="6" rx="1"></rect><rect x="9" y="2" width="6" height="6" rx="1"></rect><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"></path><path d="M12 12V8"></path></svg>執行框架配合事項</h4>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="p-4 bg-blue-50 rounded-lg">
+                                    <h5 class="font-bold text-blue-800 mb-2">遠端掃描</h5>
+                                    <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                                        <li><strong>防火牆開通：</strong>提供我方掃描來源IP，並開通至待測目標IP的連線政策。</li>
+                                        <li><strong>VPN 帳號建立：</strong>提供一組VPN帳號，供我方專家建立安全連線通道。</li>
+                                        <li><strong>虛擬機安裝：</strong>若需部署虛擬掃描器，我們會提供虛擬機映像檔(OVA)，需請您協助匯入並設定網路。</li>
+                                    </ul>
+                                </div>
+                                <div class="p-4 bg-green-50 rounded-lg">
+                                    <h5 class="font-bold text-green-800 mb-2">到場掃描</h5>
+                                    <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                                        <li><strong>網路埠提供：</strong>需提供一個可連線至待測網段的實體網路埠。</li>
+                                        <li><strong>IP 位址提供：</strong>提供一組可用的IP位址，供我方掃描器設備使用。</li>
+                                        <li><strong>實體環境：</strong>提供一處可供我方專家作業的空間。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="va-risk" class="sub-tab-content va-sub-content p-4">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold mb-4 text-gray-800">4. 執行可能造成的風險</h3>
+                                <ul class="space-y-4 text-gray-700">
+                                    <li><strong class="text-red-600">頻寬佔用 (可預期):</strong> 掃描會產生大量網路封包，建議於離峰時段執行。</li>
+                                    <li><strong class="text-yellow-600">服務中斷 (風險極低):</strong> 對於老舊或不穩定的系統，有極低機率可能觸發非預期反應。</li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0 flex justify-center items-center w-32 h-32 md:w-40 md:h-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="alert-triangle" class="lucide lucide-alert-triangle w-full h-full text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="va-remediate" class="sub-tab-content va-sub-content p-4">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                           <div class="flex-1">
+                                <h3 class="text-xl font-bold mb-4 text-gray-800">5. 修補建議與注意事項</h3>
+                                <p class="text-gray-700 mb-4">收到弱點報告後，有效的修補管理是降低風險的關鍵。我們建議遵循以下標準流程：</p>
+                                <ul class="space-y-3 text-gray-700">
+                                    <li><strong>風險評估與排定優先順序：</strong>優先修補核心系統上的「高風險」弱點。</li>
+                                    <li><strong>影響性分析與備份：</strong>變更前，務必評估影響並完成系統備份或快照。</li>
+                                    <li><strong>執行修補作業：</strong>安裝官方修補程式、變更不安全的組態設定等。</li>
+                                    <li><strong>執行複掃以驗證：</strong>修補完成後，我們會進行複掃以確保弱點已解決。</li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0 flex justify-center items-center w-32 h-32 md:w-40 md:h-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wrench" class="lucide lucide-wrench w-full h-full text-purple-500"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Web VA Content -->
+            <div id="service-web-va" class="service-content">
+                 <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-teal-700">網站弱點掃描</h2>
+                    <p class="text-md text-gray-600 mt-1">專為保護您企業數位門面設計的「網站安全自動化檢測」</p>
+                </div>
+                <div class="bg-white p-4 md:p-8 rounded-lg shadow-lg">
+                    <div class="mb-6 border-b border-gray-200 flex flex-wrap justify-center gap-x-4 md:gap-x-8">
+                        <button class="sub-tab-btn web-va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base active" onclick="showWebVaSubTab('web-va-desc')">服務說明</button>
+                        <button class="sub-tab-btn web-va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showWebVaSubTab('web-va-exec')">執行方式</button>
+                        <button class="sub-tab-btn web-va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showWebVaSubTab('web-va-info')">客戶需知</button>
+                        <button class="sub-tab-btn web-va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showWebVaSubTab('web-va-risk')">潛在風險</button>
+                        <button class="sub-tab-btn web-va-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showWebVaSubTab('web-va-remediate')">修補建議</button>
+                    </div>
+
+                    <div id="web-va-desc" class="sub-tab-content web-va-sub-content p-4 active">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold mb-4 text-gray-800">1. 服務說明要項</h3>
+                                <ul class="space-y-4 text-gray-700">
+                                    <li><strong>核心目的：</strong>自動化檢測網站是否存在常見漏洞，特別是 OWASP Top 10 風險。</li>
+                                    <li><strong>主要價值：</strong>確保網站上線前安全、防止資料外洩、維護企業形象。</li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0 flex justify-center items-center w-32 h-32 md:w-40 md:h-40">
+                                <i data-lucide="globe-zap" class="w-full h-full text-teal-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="web-va-exec" class="sub-tab-content web-va-sub-content p-4">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">2. 執行方式、架構與工具</h3>
+                        <div class="space-y-4 mb-8 text-center">
+                            <p><strong>執行方式：</strong>掃描器會模擬使用者，自動爬取網站、點擊按鈕、填寫表單並注入測試字串。</p>
+                            <p><strong>使用工具：</strong>AppScan</p>
+                        </div>
+                        <hr class="my-8 border-gray-200">
+                        <h4 class="text-lg font-bold mb-6 text-gray-800 text-center">執行架構</h4>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="p-6 bg-blue-50 rounded-lg border border-blue-200">
+                                <h5 class="font-bold text-blue-800 mb-4 text-center">遠端掃描</h5>
+                                <div class="flex justify-center items-center space-x-4 text-blue-600 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="cloud" class="lucide lucide-cloud w-10 h-10 sm:w-12 sm:h-12"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="globe" class="lucide lucide-globe w-10 h-10 sm:w-12 sm:h-12"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="monitor-smartphone" class="lucide lucide-monitor-smartphone w-10 h-10 sm:w-12 sm:h-12"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8"></path><path d="M10 19v-3.96 3.15"></path><path d="M7 19h5"></path><rect width="6" height="10" x="16" y="12" rx="2"></rect></svg>
+                                </div>
+                                <p class="text-sm text-gray-700 text-center">我方專家將從 Internet 直接對您公開的網站進行掃描作業，模擬來自全球的網路攻擊者視角。</p>
+                            </div>
+                            <div class="p-6 bg-green-50 rounded-lg border border-green-200">
+                                <h5 class="font-bold text-green-800 mb-4 text-center">到場掃描</h5>
+                                <div class="flex justify-center items-center space-x-4 text-green-600 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="user-check" class="lucide lucide-user-check w-10 h-10 sm:w-12 sm:h-12"><path d="m16 11 2 2 4-4"></path><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="laptop" class="lucide lucide-laptop w-10 h-10 sm:w-12 sm:h-12"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"></path><path d="M20.054 15.987H3.946"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="server-cog" class="lucide lucide-server-cog w-10 h-10 sm:w-12 sm:h-12"><path d="m10.852 14.772-.383.923"></path><path d="M13.148 14.772a3 3 0 1 0-2.296-5.544l-.383-.923"></path><path d="m13.148 9.228.383-.923"></path><path d="m13.53 15.696-.382-.924a3 3 0 1 1-2.296-5.544"></path><path d="m14.772 10.852.923-.383"></path><path d="m14.772 13.148.923.383"></path><path d="M4.5 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-.5"></path><path d="M4.5 14H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-.5"></path><path d="M6 18h.01"></path><path d="M6 6h.01"></path><path d="m9.228 10.852-.923-.383"></path><path d="m9.228 13.148-.923.383"></path></svg>
+                                </div>
+                                <p class="text-sm text-gray-700 text-center">針對您未對外開放、僅限內部網路存取的網站（如：後台管理系統），我方專家將親赴現場進行掃描。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="web-va-info" class="sub-tab-content web-va-sub-content p-4">
+                         <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">3. 客戶需提供的資訊</h3>
+                        <div class="mb-8">
+                            <h4 class="text-lg font-bold mb-4 text-gray-700 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="list-checks" class="lucide lucide-list-checks w-6 h-6 mr-2 text-teal-500"><path d="m3 17 2 2 4-4"></path><path d="m3 7 2 2 4-4"></path><path d="M13 6h8"></path><path d="M13 12h8"></path><path d="M13 18h8"></path></svg>共通項目</h4>
+                            <ul class="space-y-4 text-gray-700 pl-8">
+                                <li><span class="font-bold text-green-700">【必要】</span>目標網站URL清單。</li>
+                                <li><span class="font-bold text-green-700">【必要】</span>可執行掃描的離峰時間窗口。</li>
+                                <li><span class="font-bold text-green-700">【必要】</span>主要技術聯絡窗口。</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold mb-4 text-gray-700 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="network" class="lucide lucide-network w-6 h-6 mr-2 text-teal-500"><rect x="16" y="16" width="6" height="6" rx="1"></rect><rect x="2" y="16" width="6" height="6" rx="1"></rect><rect x="9" y="2" width="6" height="6" rx="1"></rect><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"></path><path d="M12 12V8"></path></svg>執行框架配合事項</h4>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="p-4 bg-blue-50 rounded-lg">
+                                    <h5 class="font-bold text-blue-800 mb-2">遠端掃描</h5>
+                                    <p class="text-sm text-gray-600 mb-3">若您的網站有資安設備防護（如WAF、IPS），為避免掃描被阻擋而影響完整性，需請您協助：</p>
+                                    <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                                        <li><strong>開立白名單：</strong>提供我方掃描來源IP，並於資安設備上設定為白名單，暫時允許所有掃描流量通過。</li>
+                                    </ul>
+                                </div>
+                                <div class="p-4 bg-green-50 rounded-lg">
+                                    <h5 class="font-bold text-green-800 mb-2">到場掃描</h5>
+                                    <p class="text-sm text-gray-600 mb-3">若選擇到場掃描，需請您協助：</p>
+                                    <ul class="list-disc list-inside space-y-2 text-sm text-gray-700">
+                                        <li><strong>網路埠提供：</strong>需提供一個可連線至內部待測網站的實體網路埠。</li>
+                                        <li><strong>IP 位址提供：</strong>提供一組可用的IP位址，供我方掃描器設備使用。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="web-va-risk" class="sub-tab-content web-va-sub-content p-4">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold mb-4 text-gray-800">4. 執行可能造成的風險</h3>
+                                <ul class="space-y-4 text-gray-700">
+                                    <li><strong class="text-red-600">頻寬佔用與主機負載 (可預期):</strong> 掃描會對網站發起密集請求。</li>
+                                    <li><strong class="text-red-600">產生髒資料 (可預期):</strong> 掃描會自動填寫表單，建議使用測試環境或於掃描後清理資料庫。</li>
+                                    <li><strong class="text-yellow-600">服務中斷 (風險低):</strong> 對於穩定性不佳的網站，有較低機率導致服務回應緩慢。</li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0 flex justify-center items-center w-32 h-32 md:w-40 md:h-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="alert-triangle" class="lucide lucide-alert-triangle w-full h-full text-red-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="web-va-remediate" class="sub-tab-content web-va-sub-content p-4">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold mb-4 text-gray-800">5. 修補建議與注意事項</h3>
+                                <p class="text-gray-700 mb-4">網站弱點的修補更專注於程式碼與應用程式邏輯的修正。</p>
+                                <ul class="space-y-3 text-gray-700">
+                                    <li><strong>源頭修復：</strong>與開發團隊合作，修正有問題的程式碼，例如對使用者輸入進行嚴格的驗證與過濾。</li>
+                                    <li><strong>更新組件：</strong>確保網站使用的第三方函式庫、框架皆為最新版本，無已知漏洞。</li>
+                                    <li><strong>安全標頭設定：</strong>在網頁伺服器上設定正確的HTTP安全標頭，增加瀏覽器端的防禦能力。</li>
+                                    <li><strong>複掃驗證：</strong>完成程式碼部署後，進行複掃以確保問題已解決。</li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0 flex justify-center items-center w-32 h-32 md:w-40 md:h-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="code-square" class="lucide lucide-code-square w-full h-full text-purple-500"><path d="m10 9-3 3 3 3"></path><path d="m14 15 3-3-3-3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PT Content -->
+            <div id="service-pt" class="service-content">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-purple-700">滲透測試 (Penetration Testing)</h2>
+                    <p class="text-md text-gray-600 mt-1">由專家模擬真實駭客，進行一次「模擬實戰攻擊演習」</p>
+                </div>
+                <div class="bg-white p-4 md:p-8 rounded-lg shadow-lg">
+                    <div class="mb-6 border-b border-gray-200 flex flex-wrap justify-center gap-x-4 md:gap-x-8">
+                        <button class="sub-tab-btn pt-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base active" onclick="showPtSubTab('pt-desc')">服務說明</button>
+                        <button class="sub-tab-btn pt-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showPtSubTab('pt-exec')">檢測架構</button>
+                        <button class="sub-tab-btn pt-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showPtSubTab('pt-info')">客戶需知</button>
+                        <button class="sub-tab-btn pt-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showPtSubTab('pt-risk')">潛在風險</button>
+                        <button class="sub-tab-btn pt-sub-tab-btn pb-2 px-1 text-gray-500 text-sm sm:text-base" onclick="showPtSubTab('pt-remediate')">修補建議</button>
+                    </div>
+
+                    <div id="pt-desc" class="sub-tab-content pt-sub-content p-4 active">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">1. 服務說明要項</h3>
+                        <div class="grid md:grid-cols-2 gap-8">
+                           <div class="p-6 bg-purple-50 rounded-lg">
+                                <h4 class="font-bold text-purple-800 mb-2 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="globe" class="lucide lucide-globe w-5 h-5 mr-2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>網站滲透測試</h4>
+                                <p class="text-sm text-gray-700">針對網站應用程式，深入檢測自動化工具無法發現的商業邏輯漏洞、權限繞過、複雜的注入攻擊等問題。</p>
+                           </div>
+                           <div class="p-6 bg-indigo-50 rounded-lg">
+                                <h4 class="font-bold text-indigo-800 mb-2 flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="server" class="lucide lucide-server w-5 h-5 mr-2"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect><rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect><line x1="6" x2="6.01" y1="6" y2="6"></line><line x1="6" x2="6.01" y1="18" y2="18"></line></svg>主機滲透測試</h4>
+                                <p class="text-sm text-gray-700">針對作業系統、資料庫、網路服務等基礎設施，嘗試利用已知或未知的漏洞，以取得系統控制權為目標。</p>
+                           </div>
+                        </div>
+                    </div>
+                    <div id="pt-exec" class="sub-tab-content pt-sub-content p-4">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">2. 檢測架構</h3>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="p-6 bg-blue-50 rounded-lg border border-blue-200">
+                                <h5 class="font-bold text-blue-800 mb-4 text-center">遠端檢測</h5>
+                                <div class="flex justify-center items-center space-x-4 text-blue-600 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="laptop" class="lucide lucide-laptop w-10 h-10 sm:w-12 sm:h-12"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"></path><path d="M20.054 15.987H3.946"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="globe" class="lucide lucide-globe w-10 h-10 sm:w-12 sm:h-12"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <i data-lucide="server-shield" class="w-10 h-10 sm:w-12 sm:h-12"></i>
+                                </div>
+                                <p class="text-sm text-gray-700 text-center">我方專家從 Internet 對您的公開服務進行模擬駭客攻擊，此方式最能反映真實世界中您所面臨的威脅。</p>
+                            </div>
+                            <div class="p-6 bg-green-50 rounded-lg border border-green-200">
+                                <h5 class="font-bold text-green-800 mb-4 text-center">到場檢測</h5>
+                                <div class="flex justify-center items-center space-x-4 text-green-600 mb-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="user-check" class="lucide lucide-user-check w-10 h-10 sm:w-12 sm:h-12"><path d="m16 11 2 2 4-4"></path><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="building" class="lucide lucide-building w-10 h-10 sm:w-12 sm:h-12"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right w-6 h-6 sm:w-8 sm:h-8"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="server-cog" class="lucide lucide-server-cog w-10 h-10 sm:w-12 sm:h-12"><path d="m10.852 14.772-.383.923"></path><path d="M13.148 14.772a3 3 0 1 0-2.296-5.544l-.383-.923"></path><path d="m13.148 9.228.383-.923"></path><path d="m13.53 15.696-.382-.924a3 3 0 1 1-2.296-5.544"></path><path d="m14.772 10.852.923-.383"></path><path d="m14.772 13.148.923.383"></path><path d="M4.5 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-.5"></path><path d="M4.5 14H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-.5"></path><path d="M6 18h.01"></path><path d="M6 6h.01"></path><path d="m9.228 10.852-.923-.383"></path><path d="m9.228 13.148-.923.383"></path></svg>
+                                </div>
+                                <p class="text-sm text-gray-700 text-center">針對內部系統或模擬內部人員攻擊情境，我方專家將親赴現場，從內部網路發動攻擊，檢測內部防禦強度。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pt-info" class="sub-tab-content pt-sub-content p-4">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">3. 客戶需提供的資訊</h3>
+                        <ul class="space-y-6 text-gray-700">
+                            <li>
+                                <strong class="flex items-center text-red-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="file-pen-line" class="lucide lucide-file-pen-line w-5 h-5 mr-2"><path d="m18 5-2.414-2.414A2 2 0 0 0 14.172 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2"></path><path d="M21.378 12.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"></path><path d="M8 18h1"></path></svg>【強制】正式書面授權書</strong>
+                                <p class="text-sm text-gray-600 mt-1 pl-7">必要性說明：此為執行模擬攻擊行為的法律基礎，用以保護雙方權益，並區分合法檢測與非法入侵。</p>
+                            </li>
+                            <li>
+                                <strong class="flex items-center text-red-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="target" class="lucide lucide-target w-5 h-5 mr-2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>【強制】明確的測試範疇 (Scope)</strong>
+                                <p class="text-sm text-gray-600 mt-1 pl-7">必要性說明：需明確定義允許測試的目標與禁止接觸的紅線，避免誤傷非測試範圍的系統，確保專案聚焦。</p>
+                            </li>
+                             <li>
+                                <strong class="flex items-center text-red-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shield" class="lucide lucide-shield w-5 h-5 mr-2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>【必要】資安設備白名單</strong>
+                                <p class="text-sm text-gray-600 mt-1 pl-7">必要性說明：為有效評估目標本身的安全性，需暫時將我方來源IP加入資安設備（如WAF/IPS）白名單，避免檢測流量被阻擋。</p>
+                            </li>
+                            <li>
+                                <strong class="flex items-center text-red-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="clock" class="lucide lucide-clock w-5 h-5 mr-2"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="10"></circle></svg>【強制】嚴格定義的執行時間窗口</strong>
+                                <p class="text-sm text-gray-600 mt-1 pl-7">必要性說明：將高風險的測試行為限制在雙方同意的離峰時段，將對營運的潛在衝擊降至最低。</p>
+                            </li>
+                            <li>
+                                <strong class="flex items-center text-red-700"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="phone-outgoing" class="lucide lucide-phone-outgoing w-5 h-5 mr-2"><path d="m16 8 6-6"></path><path d="M22 8V2h-6"></path><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>【強制】24x7 緊急聯絡窗口</strong>
+                                <p class="text-sm text-gray-600 mt-1 pl-7">必要性說明：建立即時溝通管道，以便在發現重大風險或發生非預期狀況時，能立即聯繫並共同決策。</p>
+                            </li>
+                        </ul>
+                    </div>
+                    <div id="pt-risk" class="sub-tab-content pt-sub-content p-4">
+                        <div class="flex flex-col md:flex-row gap-8 items-center">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold mb-4 text-gray-800">4. 執行可能造成的風險</h3>
+                                <ul class="space-y-4 text-gray-700">
+                                   <li><strong class="text-red-600">服務中斷或不穩定 (風險中等):</strong> 由於會主動「利用」漏洞，本質上具攻擊性，存在一定機率影響服務。</li>
+                                   <li><strong class="text-red-600">帳號鎖定 (風險中等):</strong> 密碼猜解嘗試可能觸發系統的帳號鎖定策略。</li>
+                                   <li><strong class="text-red-600">頻寬佔用與主機負載 (可預期):</strong> 流量模式可能更具突發性與攻擊性特徵。</li>
+                                </ul>
+                            </div>
+                            <div class="flex-shrink-0 flex justify-center items-center w-32 h-32 md:w-40 md:h-40">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bomb" class="lucide lucide-bomb w-full h-full text-red-500"><circle cx="11" cy="13" r="9"></circle><path d="M14.35 4.65 16.3 2.7a2.41 2.41 0 0 1 3.4 0l1.6 1.6a2.4 2.4 0 0 1 0 3.4l-1.95 1.95"></path><path d="m22 2-1.5 1.5"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pt-remediate" class="sub-tab-content pt-sub-content p-4">
+                        <h3 class="text-xl font-bold mb-6 text-gray-800 text-center">5. 修補建議面向</h3>
+                        <p class="text-center text-gray-600 mb-8">滲透測試的修補建議是多層次的，旨在建立縱深防禦體系。</p>
+                        <div class="grid md:grid-cols-3 gap-6 text-center">
+                            <div class="p-4 bg-purple-50 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="package-check" class="lucide lucide-package-check w-12 h-12 text-purple-500 mx-auto mb-2"><path d="m16 16 2 2 4-4"></path><path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"></path><path d="m7.5 4.27 9 5.15"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" x2="12" y1="22" y2="12"></line></svg>
+                                <h4 class="font-bold">應用服務/套件層級</h4>
+                                <p class="text-sm text-gray-600">建議更新存在已知漏洞的作業系統、應用程式或第三方套件至安全版本。</p>
+                            </div>
+                            <div class="p-4 bg-purple-50 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="code-square" class="lucide lucide-code-square w-12 h-12 text-purple-500 mx-auto mb-2"><path d="m10 9-3 3 3 3"></path><path d="m14 15 3-3-3-3"></path><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+                                <h4 class="font-bold">程式碼層級</h4>
+                                <p class="text-sm text-gray-600">針對檢測發現的應用程式邏輯漏洞，提供具體的程式碼修正建議。</p>
+                            </div>
+                            <div class="p-4 bg-purple-50 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shield-half" class="lucide lucide-shield-half w-12 h-12 text-purple-500 mx-auto mb-2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="M12 22V2"></path></svg>
+                                <h4 class="font-bold">網路/防禦層級</h4>
+                                <p class="text-sm text-gray-600">建議強化網路安全設備（如WAF）的阻擋規則，或調整網路架構與存取控制策略。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q&A Content -->
+            <div id="service-qa" class="service-content active">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">常見問答 (Q&amp;A)</h2>
+                    <p class="text-md text-gray-600 mt-1">為您解答關於資安檢測的常見疑問</p>
+                </div>
+                <div class="bg-white p-4 md:p-8 rounded-lg shadow-lg space-y-4">
+                    <!-- Q1 -->
+                    <div>
+                        <button class="accordion-btn w-full text-left p-4 bg-gray-100 font-bold rounded-lg hover:bg-gray-200 transition flex justify-between items-center">
+                            <span>Q1: 「到場掃描」和「遠端掃描」的結果會有差異嗎？哪一種比較好？</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-down" class="lucide lucide-chevron-down w-5 h-5 transition-transform"><path d="m6 9 6 6 6-6"></path></svg>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-l border-r border-b border-gray-200">
+                            <p class="text-gray-700">這是一個很好的問題。兩者的選擇主要取決於您的「網路環境」與「檢測目標」，而非好壞之分：</p>
+                            <ul class="list-disc list-inside mt-4 space-y-2 text-gray-600">
+                                <li><strong>到場掃描：</strong>最適合檢測「僅對內開放」的系統，例如公司內部的檔案伺服器或測試主機。因為我們的專家直接在您的內部網路進行，可以確保 **100% 的網路可達性**，得到最完整的檢測結果。</li>
+                                <li><strong>遠端掃描：</strong>最適合檢測「對外公開」的服務，例如您的官方網站或郵件伺服器。此方式能最真實地模擬外部駭客的攻擊視角。</li>
+                            </ul>
+                            <p class="mt-4 text-gray-700"><strong>結論：</strong>檢測工具與弱點資料庫都是一樣的，因此**掃描品質沒有差異**。我們會根據您提供的目標清單，建議最適合、也最具成本效益的執行方式組合。</p>
+                        </div>
+                    </div>
+                    <!-- Q2 -->
+                    <div>
+                        <button class="accordion-btn w-full text-left p-4 bg-gray-100 font-bold rounded-lg hover:bg-gray-200 transition flex justify-between items-center">
+                            <span>Q2: 為何網站掃描時，需要將我們的資安設備(WAF)加入白名單？這樣不就不準了嗎？</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-down" class="lucide lucide-chevron-down w-5 h-5 transition-transform"><path d="m6 9 6 6 6-6"></path></svg>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-l border-r border-b border-gray-200">
+                            <p class="text-gray-700">您的考量非常專業。這個問題的關鍵在於釐清「檢測目標」。</p>
+                            <p class="text-gray-700 mt-2">我們的網站弱點掃描，主要目標是檢測「**應用程式本身**」是否存在漏洞。WAF（網站應用程式防火牆）就像一位非常盡責的保鑣，但他保護的是一個我們還不確定是否健壯的VIP。</p>
+                            <ul class="list-disc list-inside mt-4 space-y-2 text-gray-600">
+                                <li><strong>暫時繞過保鑣：</strong>我們需要暫時讓保鑣(WAF)認識我們，允許我們直接與VIP（您的網站）對話，這樣才能徹底檢查VIP本身是否有任何弱點。</li>
+                                <li><strong>找出根本原因：</strong>如果我們不這麼做，WAF可能會擋掉我們所有的檢測，導致我們無法發現網站程式碼的根本問題。萬一未來WAF因設定錯誤或被繞過，這些潛藏的漏洞就會直接暴露給攻擊者。</li>
+                            </ul>
+                            <p class="mt-4 text-gray-700"><strong>結論：</strong>我們的目標是協助您**從源頭修復問題**，而非僅僅依賴外部防護。若您需要評估WAF的防護能力，我們可以另外規劃專門的測試項目。</p>
+                        </div>
+                    </div>
+                    <!-- Q3 -->
+                    <div>
+                        <button class="accordion-btn w-full text-left p-4 bg-gray-100 font-bold rounded-lg hover:bg-gray-200 transition flex justify-between items-center">
+                            <span>Q3: 滲透測試的「中等風險」聽起來有點高，你們如何確保我們線上服務的穩定？</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-down" class="lucide lucide-chevron-down w-5 h-5 transition-transform"><path d="m6 9 6 6 6-6"></path></svg>
+                        </button>
+                        <div class="accordion-content bg-white p-4 rounded-b-lg border-l border-r border-b border-gray-200">
+                            <p class="text-gray-700">我們完全理解您對線上服務穩定性的重視。將風險等級標示為「中等」，是我們基於專業透明度的標準做法，但實際上，我們透過嚴謹的流程來將風險降至最低：</p>
+                            <ul class="list-disc list-inside mt-4 space-y-2 text-gray-600">
+                                <li><strong>優先使用測試環境：</strong>我們最強烈的建議，是盡可能在與正式環境完全相同的「類生產環境(Staging)」進行測試。這是最安全、最無後顧之憂的做法。</li>
+                                <li><strong>嚴格的交戰規則(ROE)：</strong>在專案開始前，我們會與您共同訂定詳細的執行規則，包含明確的測試時間（通常是流量最低的深夜）、禁止使用的破壞性手法、以及緊急聯絡機制。</li>
+                                <li><strong>可控的測試手法：</strong>我們的專家會採用「外科手術式」的精準手法，在利用漏洞前會先進行評估，避免執行高風險或可能導致服務崩潰的操作。</li>
+                                <li><strong>即時溝通管道：</strong>測試期間，我們會與您的技術窗口保持即時聯繫，一旦發現任何可能影響服務的跡象，會立刻暫停並回報。</li>
+                            </ul>
+                            <p class="mt-4 text-gray-700"><strong>結論：</strong>雖然風險無法做到絕對的零，但透過上述的專業流程，我們可以確保測試過程在雙方「**完全知情且可控**」的狀態下進行。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const mainTabBtns = document.querySelectorAll('.main-tab-btn');
+        const serviceContents = document.querySelectorAll('.service-content');
+        
+        const vaSubTabBtns = document.querySelectorAll('.va-sub-tab-btn');
+        const vaSubContents = document.querySelectorAll('.va-sub-content');
+        
+        const webVaSubTabBtns = document.querySelectorAll('.web-va-sub-tab-btn');
+        const webVaSubContents = document.querySelectorAll('.web-va-sub-content');
+
+        const ptSubTabBtns = document.querySelectorAll('.pt-sub-tab-btn');
+        const ptSubContents = document.querySelectorAll('.pt-sub-content');
+        
+        const accordionBtns = document.querySelectorAll('.accordion-btn');
+
+        function showService(serviceId) {
+            serviceContents.forEach(content => content.classList.remove('active'));
+            mainTabBtns.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(serviceId).classList.add('active');
+            document.querySelector(`[onclick="showService('${serviceId}')"]`).classList.add('active');
+            
+            if (serviceId === 'service-va') {
+                showVaSubTab('va-desc');
+            } else if (serviceId === 'service-web-va') {
+                showWebVaSubTab('web-va-desc');
+            } else if (serviceId === 'service-pt') {
+                showPtSubTab('pt-desc');
+            }
+        }
+
+        function showVaSubTab(subTabId) {
+            vaSubContents.forEach(content => content.classList.remove('active'));
+            vaSubTabBtns.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(subTabId).classList.add('active');
+            document.querySelector(`[onclick="showVaSubTab('${subTabId}')"]`).classList.add('active');
+        }
+
+        function showWebVaSubTab(subTabId) {
+            webVaSubContents.forEach(content => content.classList.remove('active'));
+            webVaSubTabBtns.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(subTabId).classList.add('active');
+            document.querySelector(`[onclick="showWebVaSubTab('${subTabId}')"]`).classList.add('active');
+        }
+
+        function showPtSubTab(subTabId) {
+            ptSubContents.forEach(content => content.classList.remove('active'));
+            ptSubTabBtns.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(subTabId).classList.add('active');
+            document.querySelector(`[onclick="showPtSubTab('${subTabId}')"]`).classList.add('active');
+        }
+        
+        accordionBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('i[data-lucide="chevron-down"]');
+                
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    icon.style.transform = 'rotate(180deg)';
+                } 
+            });
+        });
+        
+        // Save page functionality
+        document.getElementById('save-page-btn').addEventListener('click', function() {
+            try {
+                const saveBtn = document.getElementById('save-page-btn');
+                saveBtn.style.display = 'none';
+                const pageHTML = document.documentElement.outerHTML;
+                saveBtn.style.display = 'inline-flex';
+                const blob = new Blob([pageHTML], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '資安檢測服務介紹.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("無法儲存頁面:", error);
+                alert("儲存頁面時發生錯誤。");
+            }
+        });
+    </script>
+
+
+
+</body></html>
